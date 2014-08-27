@@ -11,7 +11,7 @@ output:
 *************
 ```{r global_options, include=FALSE}
 library(knitr)
-opts_chunk$set(fig.path='Figs/', echo=FALSE, fig.width=12, fig.height=6.5, cache=TRUE)
+opts_chunk$set(fig.path='Figs/', echo=FALSE, fig.width=12, fig.height=6.5, cache=FALSE)
 options(width=85)
 ```
 
@@ -30,12 +30,14 @@ library(scales)   # used in ggplot()
 library(xlsx)     # read excel files
 library(sm)       # density plots
 
-# load("growth.rsav")         # 5-yr average population growth in cities w. pop > 750k
-# load("growth.melt.rsav")    # ""
-# load("pop.rsav")            # 5-yr average population in cities w. pop > 750k
-# load("pop.melt.rsav")       # ""
+load("growth.rsav")         # 5-yr average population growth in cities w. pop > 750k
+load("growth.melt.rsav")    # ""
+load("pop.rsav")            # 5-yr average population in cities w. pop > 750k
+load("pop.melt.rsav")       # ""
 # load("decadal.growth.rsav") # computed decadal population growth ('50-60, ..., '10-20)
 # load("decadal.growth2.rsav")# computed decadal population growth ('55-65, ..., '15-25)
+load("cities.rsav") # synthesized population and growth rate data for global cities with pop > 750k
+load("epochal.rsav") # "cities" summarized by 25-yr epoch
 ```
 
 ```{r functions}
@@ -67,7 +69,7 @@ If we consider the trajectory of developing world cities as reaching eventual pa
 
 Figure 1 provides a map of urbanization rates for cities worldwide with a population greater than 750,000 (UN 2011). Urbanization rates are clearly highest in South Asia and Sub-Saharan Africa. Figure 2 shows the *distribution* of population growth rates for the same set of cities, grouped by latitude (global North, Tropics and Subtropics). The expected value (e.g. central tendancy) of urbanization rates in the Tropics and Sub-Tropics is clearly distinct from that of the North.
 
-```{r urbanization-data, cache=FALSE, results='hide'}
+```{r urbanization_data, cache=FALSE, results='hide', eval=FALSE}
 ## Import data
 ## United Nations, Department of Economic and Social Affairs, Population Division
 ## World Urbanization Prospects: The 2011 Revision
@@ -295,6 +297,9 @@ cities$epoch[e1]<-"1950-1975"
 cities$epoch[e2]<-"1975-2000"
 cities$epoch[e3]<-"2000-2025"
 
+# save final data.frame
+save(cities, file="cities.rsav")
+
 epochal<-ddply(cities, .(Country.Code, Country, City.Code, Urban.Agglomeration, Latitude, Longitude, epoch), summarize, End.Pop.=Pop.[5], Annual.Growth=(Pop.[5]-Pop.[1])/Pop.[1]*100/25, Period.Growth= (Pop.[5]-Pop.[1])/Pop.[1]*100)
 check(epochal) # check for NAs and complete cases
 epochal<-na.omit(epochal)
@@ -302,9 +307,10 @@ epochal$epoch<-as.factor(epochal$epoch)
 epochal$Period.Growth.Bin<-cut(epochal$Period.Growth, breaks=quantile(epochal$Period.Growth), include.lowest=TRUE)
 epochal$Period.Growth.Quartile<-factor(epochal$Period.Growth.Bin, labels=c("1st quartile","2nd quartile","3rd quartile","4th quartile"))
 check(epochal) # check for NAs and complete cases
+save(epochal, file="epochal.rsav")
 ```
 
-```{r fig.width=12, fig.height=6, echo=FALSE, cache=TRUE}
+```{r urbanization_map, fig.width=12, fig.height=6, echo=FALSE}
 # base map
 world <- map_data("world")
 worldmap <- ggplot(world, aes(x=long, y=lat, group=group)) +
@@ -344,7 +350,7 @@ ggplot() +
 #scale_size(range = c(2, 10))
 
 ## Summary table of top 20 largest cities by population
-test<-subset(cities, period=="2010-2015")
+test<-subset(cities, Period=="2010-2015")
 test<-test[order(-test$Pop.), ]
 test$Current.Pop.<-test$Pop./10^3
 
@@ -368,9 +374,11 @@ rownames(fastcities)<-NULL
 colnames(fastcities)[4]<-"Growth.Rate [%]"
 print("World's Fastest Growing Cities (2010-2015) with a Population > 750,000")
 print(fastcities[1:20,], digits=3)
+
+remove(test)
 ```
 
-```{r urbanization-plots, echo=FALSE, fig.width=7, fig.height=4}
+```{r urbanization_PDF, echo=FALSE, fig.width=7, fig.height=4}
 ## density plots
 test<-subset(cities, Year==2015)
 sm.density.compare(test$Growth, test$region, xlab="% Change (Annual)", xlim=quantile(test$Growth, probs=c(0.0,.99)))
@@ -381,7 +389,7 @@ legend("topright", levels(test$region), fill=colfill)
 ## also show cooling degree days for cities in these regions..
 ```
 
-```{r Temp-Dist, echo=FALSE, include=FALSE, cache=TRUE, fig.width=7, fig.height=4, fig.align='left'}
+```{r urban_temps, eval=FALSE, cache=TRUE, fig.width=7, fig.height=4, fig.align='left'}
 ## Load list of cities from Hadley Urban Analysis
 # file<-"http://www.metoffice.gov.uk/hadobs/urban/data/Station_list1.txt"
 # stns<-read.fwf(file, widths=c(5,18,7,7), header = FALSE, sep = "\t", skip = 5, strip.white=TRUE)
@@ -454,7 +462,7 @@ Data analyzed for this study originates from a series of daily reports published
    
 ### Regional Energy Availability and Demand
 First, we explore the daily demand profile of the Northern Region (NR). For clarity, we apply weekly smoothing to the daily data.
-```{r, fig.width=10, fig.height=5, fig.align='left'}
+```{r supply_shortages, fig.width=10, fig.height=5, fig.align='left'}
 load("NRLDC.Table1.rsav")  #named "data"
 
 ## split data by type of information.
@@ -485,7 +493,7 @@ ggplot(subset(weekly, variable != "Energy_Requirement") , aes(x=uniqueweek, y=va
 **Discussion**: 
     
     
-```{r, fig.width=10, fig.align='left'}
+```{r supply_shortages_by_season, fig.width=10, fig.align='left'}
 ggplot(weekly, aes(x=Date, y=value)) + geom_line() + facet_wrap(~variable, scale="free_y", nrow=3) + theme_classic() + labs(title="Comparing Seasonality of Energy Supply, Shortage and Requirment (Weekly Smoothing)") + scale_y_continuous(name="GWh")
 ```
 *Figure 2. Comparing seasonality of energy supply, energy shortages and energy requirement for Northern India*
@@ -494,7 +502,7 @@ ggplot(weekly, aes(x=Date, y=value)) + geom_line() + facet_wrap(~variable, scale
      
     
 An important first question is when do shortages arise?  From Figure 1 we may glean that they are not strictly seasonal nor confined to peak summer months when demand is highest. To confirm, we boxplot energy shortages by month and examine their relative distributions. We see that median energy shortage is highest in October and July, with July having the highest variability of any month. Median energy shortage is lowest in the winter months.  
-```{r boxplots, fig.align='center'}
+```{r shortages_boxplots, fig.align='center'}
 # monthly boxplots
 boxplot(Energy_Shortage~month, data=data, main="Monthly boxplots of Daily Energy Shortages in the NR", ylab="GWh", xlab="Month", outline=FALSE) # outliers excluded
 ```
@@ -504,7 +512,7 @@ boxplot(Energy_Shortage~month, data=data, main="Monthly boxplots of Daily Energy
     
     
 If the magnitude of energy shortfalls (e.g. energy not supplied; ENS) is not strictly seasonal, perhaps peak shortages as a fraction of peak demand, is. In other words, do certain months experience higher rates of load-shedding at peak times?   
-```{r, fig.align='center'}
+```{r peak_shedding, fig.align='center'}
 data$PNM<-data$Peak_Shortage/data$Peak_Requirement
 boxplot(PNM~month, data=data, main="Seasonality of Peak Shedding:\nPeak-Shedding as a Fraction of Peak-Demand for the NR Grid (2011-2014)", sub="Daily Data Pooled by Month", ylab="Shortage/Demand at Peak", xlab="Month", outline=FALSE) # outliers excluded
 ```
@@ -514,7 +522,7 @@ boxplot(PNM~month, data=data, main="Seasonality of Peak Shedding:\nPeak-Shedding
   
     
 As another check, we examine energy shortages as a function of total energy supplied.  This helps answer the question: Do shortages increase as demand increases?  We would expect this to be true if capacity adequacy was the limiting factor.   
-```{r, fig.align='center'}
+```{r scatterplot, fig.align='center'}
 # plot daily energy scatterplots
 plot(data$Energy_Supplied, data$Energy_Shortage, ylim=quantile(data$Energy_Shortage, probs=c(0,0.95)), ylab="Energy Shortage [GWh]", xlab="Energy Supplied [GWh]", main="Energy Shortage as a Function of Total Energy Supplied")
 abline(lm(data$Energy_Shortage ~ data$Energy_Supplied), col="red") # regression line (y~x) 
@@ -526,7 +534,7 @@ abline(lm(data$Energy_Shortage ~ data$Energy_Supplied), col="red") # regression 
 **Discussion**: 
     
     
-```{r timeseries, fig.align='left', fig.width=10}
+```{r shortages_smooth, fig.align='left', fig.width=10}
 # # For each date, get the week of the year it belongs to by formatting it via format() using the %U or %W format placeholders. %U treats Sunday as the first day of the week, whereas %W considers Monday to be the first day of the week. Here is an example:
 # now <- as.Date(Sys.time())
 # dates <- seq(now, now + 25, by = "1 day") 
@@ -554,7 +562,7 @@ title(main="Energy shortages [GWh] in the NR grid at varying time scales", outer
 **Discussion**:
     
     
-```{r, fig.width=10} 
+```{r supply_smooth, fig.width=10} 
 ## energy supplied
 daily <- ts(data$Energy_Supplied, start = c(2011, 01), frequency = 365) #daily
 weekly<-aggregate(daily, nfrequency=52, ts.eps=1, FUN=sum) #weekly
@@ -573,7 +581,7 @@ title(main="Energy supplied [GWh] to the NR grid at varying time scales", outer=
 **Discussion**:  
     
     
-```{r, fig.width=10}
+```{r reliability_smooth, fig.width=10}
 ## compute RNS: fraction of energy requirement not supplied
 data$RNS<-data$Energy_Shortage/(data$Energy_Shortage+data$Energy_Supplied)
 daily <- ts(data$RNS, start = c(2011, 01), frequency = 365) #daily
@@ -591,7 +599,7 @@ title(main="Energy Not Supplied as a Fraction of Total Requirement for the NR gr
 *Figure 8. Fraction _Energy Not Supplied_ to the NR grid, with weekly and monthly smoothing* 
 **Discussion**:...  
     
-```{r, fig.width=10}
+```{r peak_nonpeak_smooth, fig.width=10}
 ## Look at difference between peak and off peak demand
 daily <- ts(as.matrix(cbind(data$Peak_Requirement, data$OffPeak_Requirement)), start = c(2011, 01), frequency = 365)
 weekly<-aggregate(daily, nfrequency=52, ts.eps=1, FUN=mean) #weekly
