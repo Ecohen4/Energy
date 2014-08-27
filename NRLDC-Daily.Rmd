@@ -3,6 +3,7 @@ title: 'Global Trends In Urban Energy Use: The Tropical Shift'
 author: "Elliot Cohen and Vijay Modi"
 date: "May 2014"
 output:
+  pdf_document: default
   html_document:
     theme: spacelab
 ---
