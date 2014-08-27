@@ -11,15 +11,12 @@ output:
 *************
 ```{r global_options, include=FALSE}
 library(knitr)
-opts_chunk$set(fig.path='Figs/', echo=FALSE, fig.width=14, fig.height=8)
+opts_chunk$set(fig.path='Figs/', echo=FALSE, fig.width=12, fig.height=6.5, cache=TRUE)
 options(width=85)
 ```
 
 ```{r initialize, message=FALSE}
 filepath<-"~/github/Rcommands/"
-
-## Set working directory
-# setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/Rcommands")
 
 ## read-in csv files from NRLDC html data scapring (Chris Tan and Myf March 2014)
 options(stringsAsFactors=FALSE)
@@ -60,7 +57,9 @@ Motivation
 -----------
 Many of the world's **largest** and **fastest-growing** cities--from Karachi (pop. 14 million; 34.6% increase from 2000-2010) to Delhi (22m; 39.4%), Dhaka (15m, 45.2%), Jakarta (10m; 14.8%), Bangkok (8m, 29.1%), Lagos (11m; 48.2%) and Kinshasa (9m, 55.4%)--are located in South Asia and Sub-Saharan Africa with tropical to sub-tropical climates unlike those of most OECD member cities in the global North. As the tropics/sub-tropics become increasingly urban, inustrial and affluent, it is important to consider how energy demand--particularly for thermal comfort--will evolve differently in these places than it has historically across the OECD. 
 
-To illustrate the potential for vast differences in energy demand for thermal comfort between cities in the global North and cities in the tropics/sub-tropics, consider Delhi, India.  Delhi--with its massive population and very hot climate--is an outlier compared to OECD member cities but typical of South Asia: Peak summer temperatures routinely exceed 40 deg C. (104 F.), and intense heatwaves can approach 50 deg C. (122 F.). Given the huge temperature differential between outdoor (say 104 F.) and desired indoor air temperature (say 72 F), and the thermodynamic fact that energy for cooling scales linearly with that differential, cooling a room in Delhi would require twice as much energy as cooling a room in New York where the summer temperature differential is typically half that. In addition to higher temperatures, the summer season is also much longer: in the past year, Delhi had over **six** times as many cooling-degree days as New York City (assuming a desired indoor air temperature of 72 deg F). Compounded by leaky building envelopes in developing world cities (designed for natural ventilation, not air conditiong), intense heat-island effects (typically less green space), and massive population growth, peak electricity demand in cities thourought the developing world could one day surpass that of their neighbors to the north--not only in aggregate terms because of their size, but also *per-capita* due to thermodynamics. 
+To illustrate the potential for vast differences in energy demand for thermal comfort between cities in the global North and cities in the Tropics/Sub-Tropics, consider Delhi, India.  Delhi--with its massive population and very hot climate--is an outlier compared to OECD member cities but typical of South Asia: Peak summer temperatures routinely exceed 40 deg C. (104 F.), and intense heatwaves can approach 50 deg C. (122 F.). Given the huge temperature differential between outdoor (say 104 F.) and desired indoor air temperature (say 72 F), and the thermodynamic fact that energy for cooling scales linearly with the temperature differential, cooling a room in Delhi requires twice as much energy as cooling a room in New York where the summer outdoor-indoor temperature differential is typically half that. 
+
+In addition to higher temperatures, the summer season is also much longer: in the past year, Delhi had over **six** times as many cooling-degree days as New York City (again assuming a desired indoor air temperature of 72 deg F). Compounded by leaky building envelopes in developing world cities (designed for natural ventilation, not air conditiong), intense heat-island effects (typically less green space), and massive population growth, peak electricity demand in cities thourought the developing world could one day surpass that of their neighbors to the north--not only in aggregate terms because of their population, but also *per-capita* due to climate, building design and thermodynamics. 
 
 Implications of Global Energy Service Provision Parity
 --------------
@@ -68,19 +67,19 @@ If we consider the trajectory of developing world cities as reaching eventual pa
 
 Figure 1 provides a map of urbanization rates for cities worldwide with a population greater than 750,000 (UN 2011). Urbanization rates are clearly highest in South Asia and Sub-Saharan Africa. Figure 2 shows the *distribution* of population growth rates for the same set of cities, grouped by latitude (global North, Tropics and Subtropics). The expected value (e.g. central tendancy) of urbanization rates in the Tropics and Sub-Tropics is clearly distinct from that of the North.
 
-```{r urbanization-data, cache=TRUE, results='hide'}
+```{r urbanization-data, cache=FALSE, results='hide'}
 ## Import data
 ## United Nations, Department of Economic and Social Affairs, Population Division
 ## World Urbanization Prospects: The 2011 Revision
 
 # Average Annual Rate of Change of Urban Agglomerations with 750,000 Inhabitants or More in 2011, by Country, 1950-2025 (per cent)
-growth=read.xlsx(file="UN_2011-Growth_Rate-Cities_Over_750k.xlsx",
+growth=read.xlsx(file="UN_2011_Growth_Rate_Cities_Over_750k.xlsx",
                  sheetName="GROWTH-RATE-CITIES",
                  as.data.frame=TRUE,header=TRUE,check.names=TRUE,
                  startRow=13)
 
 # Population of urban agglomerations with 750,00 inhabitants or more, 1950-2025
-pop=read.xlsx(file="UN_2011_Population-Cities_Over_750k.xlsx",
+pop=read.xlsx(file="UN_2011_Population_Cities_Over_750k.xlsx",
               sheetName="CITIES-OVER-750K",
               as.data.frame=TRUE,header=TRUE,check.names=TRUE,
               startRow=13, endRow=646, colIndex=c(1:23))
@@ -106,20 +105,27 @@ df$Continent[which(df$Continent.Abr=="SA")]<-"South.America"
 df$Continent[which(df$Continent.Abr=="OC")]<-"Oceania"
 df$Continent[which(df$Continent.Abr=="AN")]<-"Antarctica"
 
-test<-merge(pop, df, by=c("Country.Code"))
+# merge operation
+merge.by<-"Country.Code"
+print(paste("Both data.frames share a unqiue column name:", merge.by %in% names(pop) & merge.by %in% names(df), sep=" "))
+test<-merge(pop, df, by=merge.by)
 test<-subset(test, select=-Continent.Abr)
 test<-subset(test, select=-Country.Name)
 test<-subset(test, select=-Note)
 test<-subset(test, select=c(23, 1:22))
 pop<-test
+remove(test)
 save(pop, file="pop.rsav")
 
-test<-merge(growth, df, by=c("Country.Code"))
+merge.by<-"Country.Code"
+print(paste("Both data.frames share a unqiue column name:", merge.by %in% names(growth) & merge.by %in% names(df), sep=" "))
+test<-merge(growth, df, by=merge.by)
 test<-subset(test, select=-Continent.Abr)
 test<-subset(test, select=-Country.Name)
 test<-subset(test, select=-Note)
 test<-subset(test, select=c(22, 1:21))
 growth<-test
+remove(test)
 save(growth, file="growth.rsav")
 
 ## get data for a couple of well known megacities...
@@ -137,6 +143,7 @@ test$g00.10<-(pop$X2010-pop$X2000)/pop$X2000*100
 test$g10.20<-(pop$X2020-pop$X2010)/pop$X2010*100
 test[test$Urban.Agglomeration %in% get, ]
 growth.decadal<-test
+remove(test)
 save(growth.decadal, file="growth.decadal.rsav")
 
 # odd decades
@@ -150,6 +157,7 @@ test$g05.15<-(pop$X2015-pop$X2005)/pop$X2005*100
 test$g15.25<-(pop$X2025-pop$X2015)/pop$X2015*100
 test[test$Urban.Agglomeration %in% get, ]
 growth.decadal2<-test
+remove(test)
 save(growth.decadal2, file="growth.decadal2.rsav")
 
 ## START HERE if loading previously saved dataframes....
@@ -214,7 +222,10 @@ cc<-complete.cases(df2) # check for missing values...
 all(cc)                 # Given a set of logical vectors, are all of the values true?
 
 # MERGE
-cities<-merge(df1, df2, by=c("Continent", "Country.Code", "Country", "City.Code", "Urban.Agglomeration", "Latitude", "Longitude", "Year"))
+merge.by<-c("Continent", "Country.Code", "Country", "City.Code", "Urban.Agglomeration", "Latitude", "Longitude", "Year")
+print(paste("Both data.frames share a unqiue column name:", merge.by %in% names(df1) & merge.by %in% names(df2), sep=" "))
+
+cities<-merge(df1, df2, by=merge.by)
 
 # check for NAs and complete cases
 check<-function(df){
@@ -224,6 +235,9 @@ check<-function(df){
   cc<-complete.cases(df)  # check for missing values...
   print(paste("Complete Cases:", all(cc)))  # Given a set of logical vectors, are all of the values true?
   }
+
+# apply the function
+check(cities)
 
 ## group by geography... (or try clustering by lat-long attributes)
 tropics<-subset(cities, Latitude>=-23.45 & Latitude <=23.45)
@@ -418,30 +432,30 @@ legend("topright", levels(test$region), fill=colfill)
 
 Rationale
 -----------------
-Mid- to long-range energy demand forecasts are typically reported as annual totals and provide little insight to the distribution throughout the year. To address this shortcoming, we focus on the diurnal and seasonal distribution of energy demand and supply, which drive system cost but recieve relatively little attention in energy outlooks. This requires more and better data than is typically available to researchers. 
+Mid- to long-range global energy demand forecasts are typically reported as annual totals and provide little insight to the temporal distribution throughout the year. To address this shortcoming, we focus on the diurnal and seasonal distribution of energy demand and supply, which drive system cost but recieve relatively little attention in global energy outlooks. This requires more and better data than is typically available to researchers. 
 
 Examples from India
 -------------------
-This study presents an empirical analysis of diurnal-to-seasonal energy use patterns for 9 states in Northern India with a combined population of nearly 1/2 billion where we have data and prior experience.  This analyses described here can serve as a methodological template for future analysis in other parts of the developing world, particularly in South Asia and Sub-Saharan Africa.
+This study presents an empirical analysis of diurnal-to-seasonal energy use patterns for 9 states in Northern India with a combined population of nearly 1/2 billion.  The analyses described here can serve as a methodological template for future analysis in other parts of the developing world, in particular, South Asia and Sub-Saharan Africa.
 
 ### Methods and Materials
 Each state is responsible for injection-load balance within its state periphery (e.g. power control area, or PCA) and coordination with the parent (regional) grid operator. Regional grid operators, in turn, are responsible for load balance within their region and coordination with the overarching national grid. This hierarchical structure offers a "natural experiment" for testing the effect of explanatory variables of interest such as climate, urbanization and income, while controlling for confounding factors such as power sector regulatory structure, pricing mechanisms, technology adoption, and technical expertise, which can be assumed to be similar for all States operating in the same regional grid.
 
 The Northern Region Load Dispatch Center (NRLDC) is charged with injection/load balance for the entire Northern Region (NR) of India, including coordination of 9 constituent State Load Dispatch Centers (SLDCs) located in the region, and the National Load Dispatch Center (NLDC), which handles inter-regional energy exchanges to maintain overall grid frequency and stability. The NR is the largest of 5 regional power grids, supplying 273,240 GWh in 2012/13 and meeting a peak demand of 41,790 MW.
 
-The NRLDC maintains power system data for each of the 9 constituent states and the region as a whole. The data is publically available on their website, but only for downlaod as PDF. Batch downloading and converting PDF to readable format (e.g. csv) is messy, cumbersome and prone to errors. To side-step this limitation, and to better utilize available data, a JavaScript was developed to "scrape" HTML from inside the NRLDC web browser. Post-processing and subsequent data analysis was performed in RStudio using markdown language.
+The NRLDC maintains power system data for each of the 9 constituent states and the region as a whole. The data is publically available on their website, but only for downlaod as PDF. Batch downloading and converting PDF to readable format (e.g. csv) is messy, cumbersome and prone to errors. To side-step this limitation, and to better utilize available data, a JavaScript was developed to "scrape" HTML from inside the NRLDC web browser. Post-processing and subsequent data analysis were performed in RStudio using R-markdown language.
 
-Data analyzed for this study was derived from a daily report published by the NRLDC entitled "Power Supply Position in the Northern Region". The pertinent data can be summarized as follows:
+Data analyzed for this study originates from a series of daily reports published by the NRLDC entitled "Power Supply Position in the Northern Region". The pertinent data can be summarized as follows:  
 * Regional Availability and Demand: Evening-Peak (MW), Off-Peak (MW), Day-Energy (GWh)  
 * State Control Area Details: Generation (GWh), Drawal (GWh), Use (GWh)  
-* State Demand Met: Evening-Peak (MW), Off-Peak (MW), Day-Energy (GWh)
+* State Demand Met: Evening-Peak (MW), Off-Peak (MW), Day-Energy (GWh)  
 * Stationwise Details: Installed/Declared Capacity (MW), Peak/Off-Peak/Average Sentout (MW), Schedule/Unscheduled Interchange (GWh)  
    
    
 ### Regional Energy Availability and Demand
 First, we explore the daily demand profile of the Northern Region (NR). For clarity, we apply weekly smoothing to the daily data.
 ```{r, fig.width=10, fig.height=5, fig.align='left'}
-load("/Users/elliotcohen/Dropbox/data/Electricity/CEA/Rcommands/NRLDC.Table1.rsav")  #named "data"
+load("NRLDC.Table1.rsav")  #named "data"
 
 ## split data by type of information.
 energy<-subset(data, select=c("Date","year","month","day","week","Energy_Supplied", "Energy_Shortage"))
