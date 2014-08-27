@@ -1,9 +1,10 @@
 ---
-title: "Global Trends In Urban Energy Use: The Tropical Shift"
-author: Elliot Cohen and Vijay Modi
-date: May 2014
+title: 'Global Trends In Urban Energy Use: The Tropical Shift'
+author: "Elliot Cohen and Vijay Modi"
+date: "May 2014"
 output:
-  html_document
+  html_document:
+    theme: spacelab
 ---
 <link href="http://kevinburke.bitbucket.org/markdowncss/markdown.css" rel="stylesheet"></link>
 
@@ -15,8 +16,10 @@ options(width=85)
 ```
 
 ```{r initialize, message=FALSE}
+filepath<-"~/github/Rcommands/"
+
 ## Set working directory
-setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/Rcommands")
+# setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/Rcommands")
 
 ## read-in csv files from NRLDC html data scapring (Chris Tan and Myf March 2014)
 options(stringsAsFactors=FALSE)
@@ -71,19 +74,19 @@ Figure 1 provides a map of urbanization rates for cities worldwide with a popula
 ## World Urbanization Prospects: The 2011 Revision
 
 # Average Annual Rate of Change of Urban Agglomerations with 750,000 Inhabitants or More in 2011, by Country, 1950-2025 (per cent)
-growth=read.xlsx(file="/Users/elliotcohen/Dropbox/data/Urbanization/UN_2011-Growth_Rate-Cities_Over_750k.xlsx",
+growth=read.xlsx(file="UN_2011-Growth_Rate-Cities_Over_750k.xlsx",
                  sheetName="GROWTH-RATE-CITIES",
                  as.data.frame=TRUE,header=TRUE,check.names=TRUE,
                  startRow=13)
 
 # Population of urban agglomerations with 750,00 inhabitants or more, 1950-2025
-pop=read.xlsx(file="/Users/elliotcohen/Dropbox/data/Urbanization/UN_2011_Population-Cities_Over_750k.xlsx",
+pop=read.xlsx(file="UN_2011_Population-Cities_Over_750k.xlsx",
               sheetName="CITIES-OVER-750K",
               as.data.frame=TRUE,header=TRUE,check.names=TRUE,
               startRow=13, endRow=646, colIndex=c(1:23))
 
 # match city/country to continent
-countries<-scan(file="/Users/elliotcohen/Dropbox/data/Urbanization/countrylist.txt",
+countries<-scan(file="countrylist.txt",
                 what="charachter", sep="\n",
                           blank.lines.skip=TRUE)
 
