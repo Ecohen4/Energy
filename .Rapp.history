@@ -1,1 +1,166 @@
 9*365*2
+CVEN 6833: Advance Data Analysis#
+# HW1#
+#
+# load libraries#
+install.packages()#
+library (locfit)#
+library(akima)#
+library(maps)#
+library(fields)#
+library(zoo)#
+library(MASS)#
+library(nnet)#
+library(VGAM)#
+library(changepoint)#
+#
+# HW1 Q1#
+# Local Polynomial methods#
+X=c(1:10)#
+Y=c(-1.4,2.45,1.45,5.38,5.6,5.99,8.1,7.54,8.24,10.8)#
+plot(Y~X)  # visualize data#
+#
+# create a local polynomial fit for data X and Y.#
+# nonlinear regression model:  yi = f(β, xi) + εi #
+# where β = (β1, ..., βp) is a vector of parameters to be estimated, and xi = (x1, ..., xk) is a vector of predictors for the ith of n observations; #
+# the errors εi are assumed to be normally and independently distributed with mean 0 and constant variance σ squared.#
+#
+  Alpha=0.5#
+  N=length(X)#
+  k=round(Alpha*N)#
+  Res=c(rep(0,N))#
+  L=matrix(0,N,N)#
+  Y.hat<-numeric(N)#
+#
+for(i in 1:N) {#
+  X.scale<-as.matrix(dist(scale(X)))#
+  X.dist<-X.scale[i,]#
+  X.order<-order(X.dist)#
+  k.dist<-X.dist[X.order[k]]#
+  X.dist[X.dist >= k.dist] <- k.dist#
+  wts<-(1-(X.dist/k.dist)^2)^2#
+  W=diag(wts)   #compute weights#
+  place<-X-X[i]#
+  xkk = cbind(rep(1,N),place)#
+  evec<-rep(0,2)#
+  evec[1]<-1#
+  L[i,]<-evec %*% (solve(t(xkk) %*% W %*% xkk)) %*% (t(xkk) %*% W)#
+  Y.hat[i]<-sum(L[i,]*Y)#
+  Res<-Y-Y.hat#
+  DoF=sum(diag(L))#
+  GCV<-N*sum(Res^2)/(N-DoF)^2#
+  SE<-sqrt(apply(L^2, 1, sum))*sd(Res)#
+  Results<-list(Y.hat=Y.hat, Residual=Res, GCV=GCV, Lmatrix=L, DoF=DoF, SE=SE) #
+}#
+Results  #display results for parts (i) and (ii)#
+#
+# (iii) visual inspection of myLocFit compared to observed data#
+plot(X,Y,col="black",ylab="Response Variable",xlab="Independent Variable")#
+lines(X,Results$Y.hat, col="red",lty=2)  #my model#
+#
+# construct 95% confidence interval for my model#
+c1=qnorm(0.975)#
+lowerCI=Results$Y.hat - c1*Results$SE#
+upperCI=Results$Y.hat + c1*Results$SE#
+lines(x,lowerCI,lty=3,col="red")#
+lines(x,upperCI,lty=3,col="red")#
+#
+# Now compare with R package locfit#
+locfit<-locfit(Y~X, kern="bisq",alpha=0.5, deg=1)#
+locPredict<-predict(locfit,newdata=X)#
+lines(X,locPredict,col="blue")#
+legend('topleft',legend=c("MyLocFit","LocFit","My 95% CI"), col=c("red","blue","red"), lty=c(2,1,3), bty="n", y.intersp=0.8)#
+#
+# (iv) As another check, fix alpha = 1 and all the weights to 1, the results from  local polynomial code should then be identical to that from linear regression.#
+Alpha=1#
+N=length(X)#
+k=round(Alpha*N)#
+Res=c(rep(0,N))#
+L=matrix(0,N,N)#
+Y.hat<-numeric(N)#
+#
+for(i in 1:N) {#
+  X.scale<-as.matrix(dist(scale(X)))#
+  X.dist<-X.scale[i,]#
+  X.order<-order(X.dist)#
+  k.dist<-X.dist[X.order[k]]#
+  X.dist[X.dist >= k.dist] <- k.dist#
+  wts<-rep(1,N)#
+  W=diag(wts)   #compute weights#
+  place<-X-X[i]#
+  xkk = cbind(rep(1,N),place)#
+  evec<-rep(0,2)#
+  evec[1]<-1#
+  L[i,]<-evec %*% (solve(t(xkk) %*% W %*% xkk)) %*% (t(xkk) %*% W)#
+  Y.hat[i]<-sum(L[i,]*Y)#
+  Res<-Y-Y.hat#
+  DoF=sum(diag(L))#
+  GCV<-N*sum(Res^2)/(N-DoF)^2#
+  SE<-sqrt(apply(L^2, 1, sum))*sd(Res)#
+  Results<-list(Y.hat=Y.hat, Residual=Res, GCV=GCV, Lmatrix=L, DoF=DoF, SE=SE) #
+}#
+Results#
+#
+# Visual inspection of myLocFit (with alpha=1 and wts=1) compared to linear regression#
+lm<-lm(Y~X)#
+lm.yhat<-predict(lm)#
+plot(X,Y,col="black",ylab="Response Variable",xlab="Independent Variable")#
+lines(X,Results$Y.hat, col="red",lty=2)  #my model#
+lines(X,predict(lm),col="blue",lty=1)    #linear model#
+legend('topleft',legend=c("MyLocFit","Linear Model"), col=c("red","blue"), lty=c(2,1), bty="n", y.intersp=0.8)#
+#
+# (v) Replace the last value 10.8 with a high value to create an outlier, compute the L matrix (with alpha = 0.9) and Hat matrix from linear regression – compare the weights and comment.#
+X=c(1:10)#
+Y=c(-1.4,2.45,1.45,5.38,5.6,5.99,8.1,7.54,8.24,25)#
+plot(Y~X)  # visualize data#
+#
+# myLocFit w alpha=0.9#
+Alpha=0.9#
+N=length(X)#
+k=round(Alpha*N)#
+Res=c(rep(0,N))#
+L=matrix(0,N,N)#
+Y.hat<-numeric(N)#
+#
+for(i in 1:N) {#
+  X.scale<-as.matrix(dist(scale(X)))#
+  X.dist<-X.scale[i,]#
+  X.order<-order(X.dist)#
+  k.dist<-X.dist[X.order[k]]#
+  X.dist[X.dist >= k.dist] <- k.dist#
+  wts<-(1-(X.dist/k.dist)^2)^2#
+  W=diag(wts)   #compute weights#
+  place<-X-X[i]#
+  xkk = cbind(rep(1,N),place)#
+  evec<-rep(0,2)#
+  evec[1]<-1#
+  L[i,]<-evec %*% (solve(t(xkk) %*% W %*% xkk)) %*% (t(xkk) %*% W)#
+  Y.hat[i]<-sum(L[i,]*Y)#
+  Res<-Y-Y.hat#
+  DoF=sum(diag(L))#
+  GCV<-N*sum(Res^2)/(N-DoF)^2#
+  SE<-sqrt(apply(L^2, 1, sum))*sd(Res)#
+  Results<-list(Y.hat=Y.hat, Residual=Res, GCV=GCV, Lmatrix=L, DoF=DoF, SE=SE) #
+}#
+Results#
+#
+# Visual inspection of myLocFit (with alpha=0.9) compared to linear regression#
+lm<-lm(Y~X)#
+plot(X,Y,col="black",ylab="Response Variable",xlab="Independent Variable")#
+lines(X,Results$Y.hat, col="red",lty=2)  #my model#
+lines(X,predict(lm),col="blue",lty=1)    #linear model#
+legend('topleft',legend=c("MyLocFit","Linear Model"), col=c("red","blue"), lty=c(2,1), bty="n", y.intersp=0.8)#
+#
+# Comment: Both my local polynomial fit (with alpha=0.9) and the simple linear regression fit are influenced by the outlier.  However, the local polynomial fit is only impacted "locally" over the last three data points (X=8 to X=10) whereas the linear model is impacted globally, with the slope (beta 1) steeper than would be otherwise.  #
+#
+## END Q1.
+load libraries#
+Thelibs<-c("locfit", "akima", "maps", "fields", "zoo", "MASS")#
+#
+# The following function will load the libraries required for this tutorial.  If a library cannot be found in your instance of R, it will automatically be insalled.#
+load_install<-function(lib){#
+  if(! require(lib, character.only=TRUE)) install.packages(lib, character.only=TRUE)#
+  library(lib, character.only=TRUE)#
+}
+lapply(Thelibs, load_install)
+library(zoo)
