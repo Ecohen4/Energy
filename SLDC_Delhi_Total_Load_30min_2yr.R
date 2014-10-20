@@ -1,4 +1,4 @@
-setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/Rcommands")
+setwd("~/Dropbox/data/Electricity/CEA/Rcommands")
 
 library(xlsx)
 library(plyr)
@@ -48,78 +48,83 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
-###################################################
-### Import data
-###################################################
-# 15-min interval energy use data aggregated by State/UT. Original units = LU. "c" data frame converted to MU.
-
-#### Delhi Own Generation, Schedule from Grid, Drawal from Grid, Total Demand Met and UI for the period April 1 2012 - March 31 2013 at 30-min timeslices ####
-# Import Delhi SLDC data
-SLDC=read.xlsx(file="/Users/elliotcohen/Documents/SLDC big data/DTL-PS-2012-13.xls",sheetIndex=1,as.data.frame=TRUE,header=TRUE)
-
-SLDC$Date.Time<-as.POSIXlt(SLDC$Time, tz="IST")
-SLDC$Date<-as.Date(SLDC$Date.Time)
-
-# Seperate Date into yr-month-day
-ymd<-strsplit(as.character(SLDC$Date),"-")
-SLDC$year<-laply(ymd, '[[', 1) #assign the list of years to an array called SLDC$year
-SLDC$month<-laply(ymd, '[[', 2)
-SLDC$day<-laply(ymd, '[[', 3)
-
-SLDC$year<-as.factor(SLDC$year)
-SLDC$month<-as.factor(SLDC$month)
-SLDC$day<-as.factor(SLDC$day)
-
-clean.time<-round(SLDC$Date.Time,units="mins")
-SLDC$time<-times(format(clean.time, "%H:%M:%S"))
-
-save(SLDC, file="SLDC.rsav")
-
-# Rearrange dataframe
-SLDCv2<-subset(SLDC, select = c(Date,year,month,day,time,Delhi.Generation,Schedule.from.Grid,Drawl.from.Grid,Demand.met,OD.UD,Frequency))
-save(SLDCv2, file="SLDCv2.rsav")
-#
 # ###################################################
-# ### Update Oct. 31 2013: add UIrate abd UIprice
+# ### Import data (complete -- see SLDC.csv or SLDC.rdata)
 # ###################################################
-# UIrate<-read.csv(file="/Users/elliotcohen/Dropbox/Data/Electricity/CEA/Data/UI/UI_rate.csv", header=TRUE, )
-# UL1<-50.20
-# LL1<-50.00
-# UL2<-50.0
-# LL2<-49.8
-# UL3<-49.8
-# LL3<-49.5
+# # 15-min interval energy use data aggregated by State/UT. Original units = LU. "c" data frame converted to MU.
 #
-# SLDCv2$UIrate<-0
-# n<-dim(SLDCv2)[1]
+# #### Delhi Own Generation, Schedule from Grid, Drawal from Grid, Total Demand Met and UI for the period April 1 2012 - March 31 2013 at 30-min timeslices ####
+# # Import Delhi SLDC data
+# SLDC=read.xlsx(file="/Users/elliotcohen/Documents/SLDC big data/DTL-PS-2012-13.xls",sheetIndex=1,as.data.frame=TRUE,header=TRUE)
 #
-# ######## UIrate ~ fn(Freq)
-# for(i in 1:n){
-#   if(SLDCv2$Frequency[i]<=50.2 & SLDCv2$Frequency[i]>50.0) {SLDCv2$UIrate[i]<-(((UL1-SLDCv2$Frequency[i])/0.02)*16.5)}
-#   if(SLDCv2$Frequency[i]<=50.00 & SLDCv2$Frequency[i]>49.8) {SLDCv2$UIrate[i]<-(((UL2-SLDCv2$Frequency[i])/0.02)*28.5) + (((UL1-LL1)/0.02)*16.5) }
-#   if(SLDCv2$Frequency[i]<=49.8 & SLDCv2$Frequency[i]>49.5) {SLDCv2$UIrate[i]<-(((UL3-SLDCv2$Frequency[i])/0.02)*28.12) + (((UL1-LL1)/0.02)*16.5) + (((UL2-LL2)/0.02)*28.5)}
-#   if(SLDCv2$Frequency[i]<49.5) {SLDCv2$UIrate[i]<-900}
-# }
+# SLDC$Date.Time<-as.POSIXlt(SLDC$Time, tz="IST")
+# SLDC$Date<-as.Date(SLDC$Date.Time)
 #
-# ## Now compute cost of UI: OD/UD x UIrate = UIprice
-# SLDCv2$UIprice<-SLDCv2$OD.UD * SLDCv2$UIrate * 1000/100 * (1/10^5) #MWh (?) x paise/KWh x 1000 KWh/1MWh x 1 rupee/100 paise x 1 Lahk Rupee /100,000 rupee = Lahk Rupee
+# # Seperate Date into yr-month-day
+# ymd<-strsplit(as.character(SLDC$Date),"-")
+# SLDC$year<-laply(ymd, '[[', 1) #assign the list of years to an array called SLDC$year
+# SLDC$month<-laply(ymd, '[[', 2)
+# SLDC$day<-laply(ymd, '[[', 3)
 #
-# ## check for NAs
-# which(is.na(SLDCv2), arr.ind=TRUE)  #position of NA's (in any) --> None.
-# look<-which(is.na(SLDCv2), arr.ind=TRUE)
-# SLDCv2[look[,1],]
+# SLDC$year<-as.factor(SLDC$year)
+# SLDC$month<-as.factor(SLDC$month)
+# SLDC$day<-as.factor(SLDC$day)
 #
-# ## check for complete.cases
-# test<-complete.cases(SLDCv2)
-# sum(!test) #how many are not complete.cases? --> 0
-# sum(test)  #how many are complete.cases--> 20193 (all)
+# clean.time<-round(SLDC$Date.Time,units="mins")
+# SLDC$time<-times(format(clean.time, "%H:%M:%S"))
 #
-# save(SLDCv2, file="SLDCv2.rsav")
-## SUCCESS!
+# save(SLDC, file="SLDC.rData")
+# # write.csv(SLDC, file="Delhi_30min_load.csv")
+#
+# # Rearrange dataframe
+# SLDCv2<-subset(SLDC, select = c(Date,year,month,day,time,Delhi.Generation,Schedule.from.Grid,Drawl.from.Grid,Demand.met,OD.UD,Frequency))
+#
+# save(SLDCv2, file="SLDCv2.rData")
+# write.csv(SLDC, file="Delhi_30min_load_2012-2013.csv")
+## SUCCESS! Finish here, or add UIrate and compute summaries (below)
+
+###################################################
+### Optional: add UIrate abd UIprice (Oct. 31 2013)
+###################################################
+UIrate<-read.csv(file="/Users/elliotcohen/Dropbox/Data/Electricity/CEA/Data/UI/UI_rate.csv", header=TRUE, )
+UL1<-50.20
+LL1<-50.00
+UL2<-50.0
+LL2<-49.8
+UL3<-49.8
+LL3<-49.5
+
+SLDCv2$UIrate<-0
+n<-dim(SLDCv2)[1]
+
+######## UIrate ~ fn(Freq)
+for(i in 1:n){
+  if(SLDCv2$Frequency[i]<=50.2 & SLDCv2$Frequency[i]>50.0) {SLDCv2$UIrate[i]<-(((UL1-SLDCv2$Frequency[i])/0.02)*16.5)}
+  if(SLDCv2$Frequency[i]<=50.00 & SLDCv2$Frequency[i]>49.8) {SLDCv2$UIrate[i]<-(((UL2-SLDCv2$Frequency[i])/0.02)*28.5) + (((UL1-LL1)/0.02)*16.5) }
+  if(SLDCv2$Frequency[i]<=49.8 & SLDCv2$Frequency[i]>49.5) {SLDCv2$UIrate[i]<-(((UL3-SLDCv2$Frequency[i])/0.02)*28.12) + (((UL1-LL1)/0.02)*16.5) + (((UL2-LL2)/0.02)*28.5)}
+  if(SLDCv2$Frequency[i]<49.5) {SLDCv2$UIrate[i]<-900}
+}
+
+## Now compute cost of UI: OD/UD x UIrate = UIprice
+SLDCv2$UIprice<-SLDCv2$OD.UD * SLDCv2$UIrate * 1000/100 * (1/10^5) #MWh (?) x paise/KWh x 1000 KWh/1MWh x 1 rupee/100 paise x 1 Lahk Rupee /100,000 rupee = Lahk Rupee
+
+## check for NAs
+which(is.na(SLDCv2), arr.ind=TRUE)  #position of NA's (in any) --> None.
+look<-which(is.na(SLDCv2), arr.ind=TRUE)
+SLDCv2[look[,1],]
+
+## check for complete.cases
+test<-complete.cases(SLDCv2)
+sum(!test) #how many are not complete.cases? --> 0
+sum(test)  #how many are complete.cases--> 20193 (all)
+
+save(SLDCv2, file="SLDCv2.rData")
+# SUCCESS!
+
 ###################################################
 ### Aggregation: half-hourly to daily and monthly
 ###################################################
-load("SLDCv2.rsav")
+load("SLDCv2.rData")
 
 d.sum<-ddply(SLDCv2, .(Date), summarise, Delhi.Gen=sum(Delhi.Generation), Schedule.from.Grid=sum(Schedule.from.Grid), Drawl.from.Grid=sum(Drawl.from.Grid), Demand.met=sum(Demand.met), OD.UD=sum(OD.UD), Freq=mean(Frequency), UIrate=mean(UIrate), UIprice=sum(UIprice))
 
@@ -170,7 +175,7 @@ test2<-ddply(test, .(Date, year, month, day, time), transform, Delhi.Generation=
 # save as Delhi Energy Supply Position (DESP)
 # DESP contains the full data at sub-hourly timelices
 DESP<-test2
-save(DESP, file="DESP.rsav")
+save(DESP, file="DESP.rData")
 
 ###################################################
 ### Plot Delhi Energy generation, transboundary supply and total use.
