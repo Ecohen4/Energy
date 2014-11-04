@@ -474,8 +474,9 @@ This study presents an empirical analysis of diurnal-to-seasonal energy use patt
 
 Literature Review
 -------------------
+
 ---
-title: 'Global Trends In Urban Energy Use: The Tropical Shift''a'
+title: 'Global Trends In Urban Energy Use: The Tropical Shift'
 author: "Elliot Cohen, Vijay Modi, Henri Torbey, Yu Tian and Michael Piccirilli"
 date: "October 9 2014"
 output:
