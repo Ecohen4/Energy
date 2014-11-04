@@ -80,3 +80,5 @@ output:
   html_document:
     theme: spacelab
 ---
+<link href="http://kevinburke.bitbucket.org/markdowncss/markdown.css" rel="stylesheet"></link>
+
