@@ -10,86 +10,25 @@ output:
 <link href="http://kevinburke.bitbucket.org/markdowncss/markdown.css" rel="stylesheet"></link>
 
 *************
-```{r global_options, include=FALSE}
-library(knitr)
-opts_chunk$set(fig.path='Figs/', echo=FALSE, fig.width=8, fig.height=5, cache=TRUE)
-options(width=85)
-```
-
-```{r initialize, , include=TRUE, message=FALSE}
-filepath<-"~/github/Rcommands/"
-
-## read-in csv files from NRLDC html data scapring (Chris Tan and Myf March 2014)
-options(stringsAsFactors=FALSE)
-
-## Load libraries
-library(knitr)    # create RMD documents
-library(rmarkdown)
-library(plyr)     # ddply...
-library(reshape2) # melt...
-library(ggplot2)  # plots
-library(scales)   # used in ggplot()
-library(xlsx)     # read excel files
-library(sm)       # density plots
-
-load("growth.rsav")         # 5-yr average population growth in cities w. pop > 750k (as reported)
-load("growth.melt.rsav")    # "" melted
-load("pop.rsav")            # 5-yr average population in cities w. pop > 750k (as reported)
-load("pop.melt.rsav")       # "" melted
-load("growth.decadal.rsav")  # 10-yr population growth (computed for '50-60, ..., '10-20)
-load("growth.decadal2.rsav") # 10-yr population growth (computed for '55-65, ..., '15-25)
-load("cities.rsav") # synthesized population and growth rate data for global cities with pop > 750k
-load("epochal.rsav") # "cities" summarized by 25-yr epoch
-```
-
-```{r functions}
-## function to create Figure/Table numbers
-incCount <- function(inObj, useName) {
-    nObj <- length(inObj)
-    useNum <- max(inObj) + 1
-    inObj <- c(inObj, useNum)
-    names(inObj)[nObj + 1] <- useName
-    inObj
-}
-figCount <- c(`_` = 0)
-tableCount <- c(`_` = 0)
-## Use like this:
-# figCounts <- incCount(figCount, "f.randomFigure")
-
-# function to check for NAs and complete cases
-check<-function(df){
-  NAs<-sum(is.na(df))
-  print(paste("NAs:", NAs)) # count NA's
-  if (NAs>0) df1[which(is.na(df)), ] # Show NA's, if any.
-  cc<-complete.cases(df)  # check for missing values...
-  print(paste("Complete Cases:", all(cc)))  # Given a set of logical vectors, are all of the values true?
-  }
-```
-
-### Methods and Materials
-
 Literature Review
 -------------------
 
-\begin{table*}
+We spent the first few weeks of this semester collecting and reading literature on topics including energy usage, global energy trends, climate-electricty relation, statistical analysis methods, etc. It was a great help in problem clarification, research design and other processes.
 
-\begin{tabular}{|c|c|c|c|c|}
+> Literature.Review.Summary.Yu.Tian <- read.csv("~/Documents/FALL 2014/QMSS G4998/Literature Review Summary-Yu Tian.csv")
+> View(Literature.Review.Summary.Yu.Tian)
 
-hline hline
+The following two papers are found to be very referable.
 
-multirow{2}{*}{Multi-Row} & multicolumn{2}{|c|}{Multi-Column} & multicolumn{2}{|c|}{multirow{2}{*{Multi-Row and Col}} \
+### Climatic-related Evaluations of the Summer Peak-hours’ electric load in Israel
+* M. Segal; H. Shafri; M. Mandel; P. Alpert; Y. Balmor (Journal of Applied Meteorology, 1992)
 
-cline{2-3}
+This study evaluated the interrelationship between the summer peak electric load and pertinent meteorological parameters. The regression model proposed in this paper are widely accepted and well developed by successive researchers.
 
-& column-1 & column-2 & multicolumn{2}{|c|}{} \
 
-hline
+### Modelling changes to electricity demand load duration curves as a consequence of predicted climate change for Australia
+* Marcus J. Thatcher (Energy, 2007)
 
-label-1 & label-2 & label-3 & label-4 & label-5 \
+This research was developed on the base of Segal's research and took Segal's model to a completely different level. It brought up valid ways (sine-exponential model) using only daily max/min temperature and relative humidity to estimate apparent temperature in 30 mins intervals. Most importantly, the author designed and testified an effective electricity demand predicting model, which uses time (data and specific time) and relative temperatures as input and outputs estimated electriicty demand in 30 mins intervals.
 
-hline
-
- \end{tabular}
-
-\end{table*}
 
