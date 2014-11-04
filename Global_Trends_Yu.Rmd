@@ -3,14 +3,14 @@
 Literature Review
 -------------------
 
-We spent the first few weeks of this semester collecting and reading literature on topics including energy usage, global energy trends, climate-electricty relation, statistical analysis methods, etc. It was a great help in problem clarification, research design and other processes.
+We spent the first few weeks of this semester collecting and reading literature on topics including energy usage, global energy trends, climate-electricty relation, statistical analysis methods, etc. It was a great help in problem clarification, research design processes.
 
 The following two papers are found to be very referable.
 
 ### 1. Climatic-related Evaluations of the Summer Peak-hours’ electric load in Israel
 * M. Segal; H. Shafri; M. Mandel; P. Alpert; Y. Balmor (Journal of Applied Meteorology, 1992)
 
-This study evaluated the interrelationship between the summer peak electric load and pertinent meteorological parameters. The regression model proposed in this paper are widely accepted and well developed by successive researchers.
+This study evaluated the interrelationship between the summer peak electricity load and pertinent meteorological parameters. The author proposed in this paper a regression model refecting how climate parameters (temperature, humidity, wind spead) influence summer peak electricity load, which is widely accepted and well developed by successive researchers.
 
 
 ### 2. Modelling changes to electricity demand load duration curves as a consequence of predicted climate change for Australia
