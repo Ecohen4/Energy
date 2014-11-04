@@ -471,3 +471,25 @@ A Global Survey
 This study presents an empirical analysis of diurnal-to-seasonal energy use patterns for XX global cities...
 
 ### Methods and Materials
+
+Literature Review
+-------------------
+
+We spent the first few weeks of this semester collecting and reading literature on topics including energy usage, global energy trends, climate-electricty relation, statistical analysis methods, etc. It was a great help in problem clarification, research design processes.
+
+The following two papers are found to be very referable.
+
+### 1. Climatic-related Evaluations of the Summer Peak-hours’ electric load in Israel
+* M. Segal; H. Shafri; M. Mandel; P. Alpert; Y. Balmor (Journal of Applied Meteorology, 1992)
+
+This study evaluated the interrelationship between the summer peak electricity load and pertinent meteorological parameters. The author proposed in this paper a regression model refecting how climate parameters (temperature, humidity, wind spead) influence summer peak electricity load, which is widely accepted and well developed by successive researchers.
+
+
+### 2. Modelling changes to electricity demand load duration curves as a consequence of predicted climate change for Australia
+* Marcus J. Thatcher (Energy, 2007)
+
+This research was developed on the base of Segal's research and took Segal's model to a completely different level. It brought up valid ways (sine-exponential model) using only daily max/min temperature and relative humidity to estimate apparent temperature in 30 mins intervals. Most importantly, the author designed and testified an effective electricity demand predicting model, which uses time (data and specific time) and relative temperatures as input and outputs estimated electriicty demand in 30 mins intervals.
+
+
+
+
