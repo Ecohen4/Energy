@@ -1,5 +1,6 @@
-Global Trends in Urban Energy Use
-=========
-Many of the world's **largest** and **fastest-growing** cities--from Karachi (population: 14 million; percent increase 2000-2010: 34.6%) to Delhi (22m; 39.4%), Dhaka (15m, 45.2%), Jakarta (10m; 14.8%), Bangkok (8m, 29.1%), Lagos (11m; 48.2%) and Kinshasa (9m, 55.4%)--are located in South Asia and Sub-Saharan Africa with tropical to sub-tropical climates unlike those of most OECD member cities in the global North. As the tropics/sub-tropics become increasingly urban, industrial and affluent, it is important to consider how energy demand--particularly for thermal comfort--will evolve differently in these places than it has historically across the OECD. 
+# Temporal Downscaling of Energy Demand Forecasts
+Mid- to long-range energy demand forecasts are typically reported as annual totals and provide little insight to the distribution throughout the year. To address this shortcoming, we focus on the diurnal and seasonal distribution of energy demand and supply, which drive system cost but recieve relatively little attention in energy outlooks. This requires more and better data than is typically available to researchers.  
 
-This repository contains various R scripts used for this and other energy analyses.
+This study presents an empirical analysis of diurnal-to-seasonal energy use patterns for 9 states in Northern India with a combined population of nearly half a billion.  The analyses described here can serve as a methodological template for estimating peak-demand in data-sparse regions throughout South Asia and Sub-Saharan Africa.  
+
+This repository contains various R scripts used for this and other energy analyses.  
