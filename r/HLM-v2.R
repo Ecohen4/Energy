@@ -2,7 +2,6 @@
 
 # Set your wd() to the dropbox folder I sent you....
 # setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/data")
-# setwd("~/github/Energy/r/myModelDiagnostics.R")
 setwd("/Users/elliotcohen/Dropbox/UCD-MIT collaboration/R_commands/HLM")
 
 # call libraries
@@ -119,9 +118,9 @@ cX<-as.data.frame(cbind(cX1,cX2,cX3))
 ## First fit a simple linear regression, for comparison with HLM
 ##################
 ## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
-bestLM<-bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
-GLMdiagnostics(bestLM)       # standard diagnostic tests
-AICbestlm<-extractAIC(bestLM)  # let simple lm be the null model. (AIC=290.93)
+bestLM<-bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for genearlized linear models.
+GLMdiagnostics(bestLM)       # Elliot's function for standard diagnostic tests
+AICnull<-extractAIC(bestLM)  # let simple lm be the null model. (AIC=290.93)
 summary(bestLM)
 
 ## results of simple linear regression with all the predictors
@@ -162,13 +161,10 @@ plot(bestLM$fitted.values, log(ENS))
 ##################
 ## Next try a two-tier linear regression, for comparison with HLM
 ##################
-## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
+#### SKIP THIS: GLM IS NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS ####
 lm1 <- bestGLM(X=X1, Y=log(Y))
-GLMdiagnostics(lm1)       # standard diagnostic tests
-
-## Visual inspection of fitted vs. observed response
-plot(lm1$fitted.values, log(ENS))
-
+GLMdiagnostics(lm1)       # Elliot's function for standard diagnostic tests
+AIClm2<-extractAIC(lm1)  # let simple lm be the null model. (AIC=290.93)
 summary(lm1)
 # autocorrelation up to lag 3 above the critical threshold.
 # Distribution of residuals look good.
@@ -251,33 +247,31 @@ anova(altmod,bestmod)
 # Interpretation: simpler model (structural vars removed) is not significantly different than more complex model at the 95% CI.
 
 # compare AIC across models
-bestlm.AIC<-extractAIC(bestLM)[2]  # OLS with structural + climate + sc
-lm1.AIC<-extractAIC(lm1)[2]        # OLS w. structural only
-lm2.AIC<-extractAIC(lm2)[2]        # Second-tier OLS w. climate + sc variables regressed on the residuals of lm1.
+AICbestlm<-extractAIC(bestLM)[2]  # OLS with structural + climate + sc
+AIClm1<-extractAIC(lm1)[2]        # OLS w. structural only
+AIClm2<-extractAIC(lm2)[2]        # Second-tier OLS w. climate + sc added to lm1
 
-nullHLM.AIC<-extractAIC(nullmod)[2]   # HLM with structural only
-altHLM.AIC<-extractAIC(altmod)[2]     # HLM with structural + climate + sc
-bestHLM.AIC<-extractAIC(bestmod)[2]   # HLM with climate + sc only
+AICnull<-extractAIC(nullmod)[2]   # HLM with structural only
+AICalt<-extractAIC(altmod)[2]     # HLM with structural + climate + sc
+AICbest<-extractAIC(bestmod)[2]   # HLM with climate + sc only
 # Results: overall bestmodel so far is the HLM with log(Y)~Envt + sc.
 
-# compare BIC across models
-bestLM.BIC<-extractAIC(bestLM, k=log(n))[2] # OLS with structural + climate + sc
-LM1.BIC<-extractAIC(lm1, k=log(n))[2]     # OLS w. structural only
-LM2.BIC<-extractAIC(lm2, k=log(n))[2]     # Second-tier OLS w. climate + sc added to lm1
+BICbestlm<-extractAIC(bestLM, k=log(n))[2] # OLS with structural + climate + sc
+BIClm1<-extractAIC(lm1, k=log(n))[2]     # OLS w. structural only
+BIClm2<-extractAIC(lm2, k=log(n))[2]     # Second-tier OLS w. climate + sc added to lm1
 
-nullHLM.BIC<-extractAIC(nullmod, k=log(n))[2] # HLM with structural only
-altHLM.BIC<-extractAIC(altmod, k=log(n))[2]   # HLM with structural + climate + sc
-bestHLM.BIC<-extractAIC(bestmod, k=log(n))[2] # HLM with climate + sc only
+BICnull<-extractAIC(nullmod, k=log(n))[2] # HLM with structural only
+BICalt<-extractAIC(altmod, k=log(n))[2]   # HLM with structural + climate + sc
+BICbest<-extractAIC(bestmod, k=log(n))[2] # HLM with climate + sc only
 
-# compare degrees of freedom across models
-bestLM.DF<-extractAIC(bestLM)[1] # OLS with structural + climate + sc
-LM1.DF<-extractAIC(lm1)[1]     # OLS w. structural only
-LM2.DF<-extractAIC(lm2)[1]     # Second-tier OLS w. climate + sc added to lm1
-nullHLM.DF<-extractAIC(nullmod)[1]   # HLM with structural only
-altHLM.DF<-extractAIC(altmod)[1]     # HLM with structural + climate + sc
-bestHLM.DF<-extractAIC(bestmod)[1]   # HLM with climate + sc only
+DFbestlm<-extractAIC(bestLM)[1] # OLS with structural + climate + sc
+DFlm1<-extractAIC(lm1)[1]     # OLS w. structural only
+DFlm2<-extractAIC(lm2)[1]     # Second-tier OLS w. climate + sc added to lm1
+DFnull<-extractAIC(nullmod)[1]   # HLM with structural only
+DFalt<-extractAIC(altmod)[1]     # HLM with structural + climate + sc
+DFbest<-extractAIC(bestmod)[1]   # HLM with climate + sc only
 
-compare<-data.frame(Model=c("LM_Null", "LM_1", "LM_2", "HLM_Null","HLM_Alt","HLM_Best"), DF=c(bestLM.DF, LM1.DF, LM2.DF, nullHLM.DF,altHLM.DF,bestHLM.DF), AIC=c(bestlm.AIC, lm1.AIC, lm2.AIC,nullHLM.AIC,altHLM.AIC,bestHLM.AIC), BIC=c(bestLM.BIC, LM1.BIC, LM2.BIC,nullHLM.BIC,altHLM.BIC,bestHLM.BIC))
+compare<-data.frame(Model=c("LM_Null", "LM_1", "LM_2", "HLM_Null","HLM_Alt","HLM_Best"), DF=c(DFbestlm, DFlm1, DFlm2, DFnull,DFalt,DFbest), AIC=c(AICbestlm, AIClm1, AIClm2,AICnull,AICalt,AICbest), BIC=c(BICbestlm, BIClm1, BIClm2,BICnull,BICalt,BICbest))
 compare
 
 ###############################
@@ -367,9 +361,6 @@ main="ENS ~ Climate + Supply-Chain Predictors Only"
 plot(getResponse(bestmod), fitted.values(bestmod), pch=20, col="black", xlab="Observed Y",ylab="Modeled Y", main="Now remove structural predictors (climate + supply-chain only)")
 abline(a=0, b=1)
 
-########################
-### KEY TAKEAWAY: STRUCTURAL CONSTRAINTS DO NOT ADD SIGNIFICANT INFORMATION BEYOND WHAT IS CONTAINED IN THE MEAN RELIABILITY SCORE OF EACH STATE. THAT IS WHY THE MIXED-EFFECTS MODEL, WHICH ESTIMATES THE INTERCEPT FOR EACH STATE SEPERATELY, YIELDS SIMILAR GOODNESS OF FIT AS THE FULL OLS WITH FAR FEWER PREDICTORS. THE LINEAR MIXED EFFECTS MODEL (LME) CAPTURES DIFFERENCES RESULTING FROM LARGE STRUCTURAL VARIABLES SUCH AS CAPACITY ADEQUACY AND CAPACITY UTILIZATION VIA THE RANDOM INTERCEPT.
-##########################
 
 ##########################
 ## try all 7 combinations of predictor sets [(2^n)-1 ]
@@ -532,4 +523,3 @@ summary(bestmod)
 #
 # Number of Observations: 105
 # Number of Groups: 5
-
