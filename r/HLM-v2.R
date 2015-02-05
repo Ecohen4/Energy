@@ -1,7 +1,9 @@
 ### Hierarchical Linear Model (HLM): Example from Fox (2002) adopted to Cohen (2014)
 
 # Set your wd() to the dropbox folder I sent you....
-setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/data")
+# setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/data")
+# setwd("~/github/Energy/r/myModelDiagnostics.R")
+setwd("/Users/elliotcohen/Dropbox/UCD-MIT collaboration/R_commands/HLM")
 
 # call libraries
 library(nlme)     # HLM
@@ -17,15 +19,18 @@ library(gclus)    # scatterplot
 library(cluster)  # dependent of gclus
 
 # call custom functions
-source("~/github/Energy/myModelDiagnostics.R")
-source("~/github/Energy/scatterplot.R")
+
+source("myModelDiagnostics.R")
+source("scatterplot.R")
+# source("~/github/Energy/r/myModelDiagnostics.R")
+# source("~/github/Energy/r/scatterplot.R")
 
 ## set graphing parameters
 #par()              # view current settings
 opar <- par()       # make a copy of current settings
 
 ## import data (Cohen 2013)
-load("data2.rsav")  # Monthly observations of response and predictor variables for 5 states over a two-year period, extra columns contain meta-data.
+load("data2.rdata")  # Monthly observations of response and predictor variables for 5 states over a two-year period, extra columns contain meta-data.
 dim(data2)
 head(data2)
 str(data2)
@@ -110,14 +115,101 @@ cX2<-scale(X2, center=TRUE, scale=FALSE)
 cX3<-scale(X3, center=TRUE, scale=FALSE)
 cX<-as.data.frame(cbind(cX1,cX2,cX3))
 
-# ##################
-# ## First fit a simple linear regression, for comparison with HLM
-# ##################
-# #### SKIP THIS: GLM IS NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS ####
-# bestLM<-bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for genearlized linear models.
-# GLMdiagnostics(bestLM)       # Elliot's function for standard diagnostic tests
-# AICnull<-extractAIC(bestLM)  # let simple lm be the null model. (AIC=290.93)
-# summary(bestLM)
+##################
+## First fit a simple linear regression, for comparison with HLM
+##################
+## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
+bestLM<-bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
+GLMdiagnostics(bestLM)       # standard diagnostic tests
+AICbestlm<-extractAIC(bestLM)  # let simple lm be the null model. (AIC=290.93)
+summary(bestLM)
+
+## results of simple linear regression with all the predictors
+# periodic autocorrelation observed, though not above the critical threshold value.
+# Perhaps some heterscadasticity
+#
+# Call:
+#   glm(formula = y ~ ., family = gaussian(), data = xx)
+#
+# Deviance Residuals:
+#   Min        1Q    Median        3Q       Max
+# -2.29667  -0.62497   0.07345   0.54755   1.98822
+#
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)
+# (Intercept)        1.139e+01  1.783e+00   6.388 6.18e-09 ***
+#   PctGrid           -5.944e-02  8.787e-03  -6.765 1.09e-09 ***
+#   Coal_Stock_Days   -1.991e-01  5.665e-02  -3.515 0.000675 ***
+#   gas_eff_FAF       -3.771e+00  2.505e+00  -1.505 0.135572
+# Hydro_eff_Storage  1.285e+00  7.054e-01   1.822 0.071565 .
+# IB_MAXTEMP         9.288e-02  2.355e-02   3.944 0.000153 ***
+#   CapAdequacy       -3.977e+00  3.776e-01 -10.534  < 2e-16 ***
+#   P_Act_mm           5.502e-04  1.661e-04   3.312 0.001312 **
+#   HotDry             2.416e-05  7.204e-06   3.354 0.001144 **
+#   Total_WWF          1.172e-04  1.479e-05   7.920 4.43e-12 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#
+# (Dispersion parameter for gaussian family taken to be 0.7511119)
+#
+# Null deviance: 384.007  on 104  degrees of freedom
+# Residual deviance:  71.356  on  95  degrees of freedom
+# AIC: 279.42
+
+## Visual inspection of fitted vs. observed response
+plot(bestLM$fitted.values, log(ENS))
+
+##################
+## Next try a two-tier linear regression, for comparison with HLM
+##################
+## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
+lm1 <- bestGLM(X=X1, Y=log(Y))
+GLMdiagnostics(lm1)       # standard diagnostic tests
+
+## Visual inspection of fitted vs. observed response
+plot(lm1$fitted.values, log(ENS))
+
+summary(lm1)
+# autocorrelation up to lag 3 above the critical threshold.
+# Distribution of residuals look good.
+
+lm2 <-bestGLM(X=cbind(X2,X3), Y=residuals(lm1))
+GLMdiagnostics(lm2)       # Elliot's function for standard diagnostic tests
+AIClm2<-extractAIC(lm2)  # let simple lm be the null model. (AIC=290.93)
+summary(lm2)
+# periodic autocorrelation observed, though not above the critical threshold.
+# high density of residuals around 0.
+
+# Call:
+#   glm(formula = y ~ ., family = gaussian(), data = xx)
+#
+# Deviance Residuals:
+#   Min       1Q   Median       3Q      Max
+# -2.5615  -0.5872   0.1353   0.6235   1.7306
+#
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)
+# (Intercept)         -1.222e-01  1.727e+00  -0.071  0.94372
+# IB_MAXTEMP           7.518e-02  2.415e-02   3.114  0.00243 **
+#   P_Act_mm           3.591e-04  1.715e-04   2.095  0.03881 *
+#   HotDry             1.765e-05  6.853e-06   2.576  0.01151 *
+#   Coal_Stock_Days   -1.625e-01  5.921e-02  -2.744  0.00723 **
+#   gas_eff_FAF       -4.365e+00  2.662e+00  -1.640  0.10426
+# Hydro_eff_Storage    2.008e+00  7.424e-01   2.705  0.00807 **
+#   Total_WWF          8.046e-05  1.449e-05   5.551 2.47e-07 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#
+# (Dispersion parameter for gaussian family taken to be 0.8556663)
+#
+# Null deviance: 160.62  on 104  degrees of freedom
+# Residual deviance:  83.00  on  97  degrees of freedom
+# AIC: 291.29
+#
+# Number of Fisher Scoring iterations: 2
+
+## Visual inspection of fitted vs. observed response
+plot(lm2$fitted.values, log(ENS))
 
 #####################
 # Fit a mixed-effects model with random intercepts and fixed slopes --> USE THIS
@@ -159,25 +251,54 @@ anova(altmod,bestmod)
 # Interpretation: simpler model (structural vars removed) is not significantly different than more complex model at the 95% CI.
 
 # compare AIC across models
-#AIClm<-extractAIC(bestLM)[2]     # lm with structural + climate + sc
-AICnull<-extractAIC(nullmod)[2]   # HLM with structural only
-AICalt<-extractAIC(altmod)[2]     # HLM with structural + climate + sc
-AICbest<-extractAIC(bestmod)[2]   # HLM with climate + sc only
+bestlm.AIC<-extractAIC(bestLM)[2]  # OLS with structural + climate + sc
+lm1.AIC<-extractAIC(lm1)[2]        # OLS w. structural only
+lm2.AIC<-extractAIC(lm2)[2]        # Second-tier OLS w. climate + sc variables regressed on the residuals of lm1.
+
+nullHLM.AIC<-extractAIC(nullmod)[2]   # HLM with structural only
+altHLM.AIC<-extractAIC(altmod)[2]     # HLM with structural + climate + sc
+bestHLM.AIC<-extractAIC(bestmod)[2]   # HLM with climate + sc only
 # Results: overall bestmodel so far is the HLM with log(Y)~Envt + sc.
 
-BIClm<-extractAIC(bestLM)[2]              # simple lm
-BICnull<-extractAIC(nullmod, k=log(n))[2] # HLM with structural only
-BICalt<-extractAIC(altmod, k=log(n))[2]   # HLM with structural + climate + sc
-BICbest<-extractAIC(bestmod, k=log(n))[2] # HLM with climate + sc only
+# compare BIC across models
+bestLM.BIC<-extractAIC(bestLM, k=log(n))[2] # OLS with structural + climate + sc
+LM1.BIC<-extractAIC(lm1, k=log(n))[2]     # OLS w. structural only
+LM2.BIC<-extractAIC(lm2, k=log(n))[2]     # Second-tier OLS w. climate + sc added to lm1
 
-#AIClm<-extractAIC(bestLM)[1]     # lm with structural + climate + sc
-DFnull<-extractAIC(nullmod)[1]   # HLM with structural only
-DFalt<-extractAIC(altmod)[1]     # HLM with structural + climate + sc
-DFbest<-extractAIC(bestmod)[1]   # HLM with climate + sc only
+nullHLM.BIC<-extractAIC(nullmod, k=log(n))[2] # HLM with structural only
+altHLM.BIC<-extractAIC(altmod, k=log(n))[2]   # HLM with structural + climate + sc
+bestHLM.BIC<-extractAIC(bestmod, k=log(n))[2] # HLM with climate + sc only
 
-compare<-data.frame(Model=c("HLM_Null","HLM_Alt","HLM_Best"), DF=c(DFnull,DFalt,DFbest), AIC=c(AICnull,AICalt,AICbest), BIC=c(BICnull,BICalt,BICbest))
+# compare degrees of freedom across models
+bestLM.DF<-extractAIC(bestLM)[1] # OLS with structural + climate + sc
+LM1.DF<-extractAIC(lm1)[1]     # OLS w. structural only
+LM2.DF<-extractAIC(lm2)[1]     # Second-tier OLS w. climate + sc added to lm1
+nullHLM.DF<-extractAIC(nullmod)[1]   # HLM with structural only
+altHLM.DF<-extractAIC(altmod)[1]     # HLM with structural + climate + sc
+bestHLM.DF<-extractAIC(bestmod)[1]   # HLM with climate + sc only
+
+compare<-data.frame(Model=c("LM_Null", "LM_1", "LM_2", "HLM_Null","HLM_Alt","HLM_Best"), DF=c(bestLM.DF, LM1.DF, LM2.DF, nullHLM.DF,altHLM.DF,bestHLM.DF), AIC=c(bestlm.AIC, lm1.AIC, lm2.AIC,nullHLM.AIC,altHLM.AIC,bestHLM.AIC), BIC=c(bestLM.BIC, LM1.BIC, LM2.BIC,nullHLM.BIC,altHLM.BIC,bestHLM.BIC))
 compare
 
+###############################
+# Fitted vs. observed response
+##############################
+## visual inspection of observed vs modeled fit in LOG SPACE.
+plot(x=log(ENS), y=bestLM$fitted.values, main="OLS with structural + climate + sc") # OLS with structural + climate + sc
+plot(x=log(ENS), y=lm1$fitted.values, main="OLS w. structural only")    # OLS w. structural only
+plot(x=log(ENS), y=lm2$fitted.values, main="Second-tier OLS w. climate + sc added to lm1")    # Second-tier OLS w. climate + sc added to lm1
+plot(x=log(ENS), y=fitted(nullmod), main="HLM with structural only") # HLM with structural only
+plot(x=log(ENS), y=fitted(altmod), main="HLM with structural + climate + sc")  # HLM with structural + climate + sc
+plot(x=log(ENS), y=fitted(bestmod), main="HLM with climate + sc only") # HLM with climate + sc only
+
+
+## visual inspection of observed vs modeled fit in ORIGINAL SPACE (backtransformed)
+plot(x=ENS, y=exp(bestLM$fitted.values), main="OLS with structural + climate + sc") # OLS with structural + climate + sc
+plot(x=ENS, y=exp(lm1$fitted.values), main="OLS w. structural only")    # OLS w. structural only
+plot(x=ENS, y=exp(lm2$fitted.values), main="Second-tier OLS w. climate + sc added to lm1")    # Second-tier OLS w. climate + sc added to lm1
+plot(x=ENS, y=exp(fitted(nullmod)), main="HLM with structural only") # HLM with structural only
+plot(x=ENS, y=exp(fitted(altmod)), main="HLM with structural + climate + sc")  # HLM with structural + climate + sc
+plot(x=ENS, y=exp(fitted(bestmod)), main="HLM with climate + sc only") # HLM with climate + sc only
 #########################
 ## MODEL DIAGNOSTICS
 #########################
@@ -185,6 +306,15 @@ compare
 source("myanova.R")
 
 ## Model Space (log-transformed)
+## Model Space (log-transformed)
+myANOVA(Y=bestLM$y, Yhat=fitted.values(bestLM), k=length(bestLM$coefficients)-1, p=length(bestLM$coefficients))  # bestLM
+## Model Space (log-transformed)
+myANOVA(Y=lm1$y, Yhat=fitted.values(lm1), k=length(lm1$coefficients)-1, p=length(lm1$coefficients))  # lm1
+## Model Space (log-transformed)
+myANOVA(Y=lm2$y, Yhat=fitted.values(lm2), k=length(lm2$coefficients)-1, p=length(lm2$coefficients))  # lm2
+
+
+
 myANOVA(Y=getResponse(nullmod), Yhat=fitted.values(nullmod), k=length(nullmod$coefficients$fixed), p=(length(nullmod$coefficients$fixed)+dim(random.effects(nullmod))[1]))  # nullmod
 myANOVA(Y=getResponse(altmod), Yhat=fitted.values(altmod), k=length(altmod$coefficients$fixed), p=(length(altmod$coefficients$fixed)+dim(random.effects(altmod))[1]))        # altmod
 myANOVA(Y=getResponse(bestmod), Yhat=fitted.values(bestmod), k=length(bestmod$coefficients$fixed), p=(length(bestmod$coefficients$fixed)+dim(random.effects(bestmod))[1]))  # bestmod
@@ -237,6 +367,9 @@ main="ENS ~ Climate + Supply-Chain Predictors Only"
 plot(getResponse(bestmod), fitted.values(bestmod), pch=20, col="black", xlab="Observed Y",ylab="Modeled Y", main="Now remove structural predictors (climate + supply-chain only)")
 abline(a=0, b=1)
 
+########################
+### KEY TAKEAWAY: STRUCTURAL CONSTRAINTS DO NOT ADD SIGNIFICANT INFORMATION BEYOND WHAT IS CONTAINED IN THE MEAN RELIABILITY SCORE OF EACH STATE. THAT IS WHY THE MIXED-EFFECTS MODEL, WHICH ESTIMATES THE INTERCEPT FOR EACH STATE SEPERATELY, YIELDS SIMILAR GOODNESS OF FIT AS THE FULL OLS WITH FAR FEWER PREDICTORS. THE LINEAR MIXED EFFECTS MODEL (LME) CAPTURES DIFFERENCES RESULTING FROM LARGE STRUCTURAL VARIABLES SUCH AS CAPACITY ADEQUACY AND CAPACITY UTILIZATION VIA THE RANDOM INTERCEPT.
+##########################
 
 ##########################
 ## try all 7 combinations of predictor sets [(2^n)-1 ]
@@ -399,3 +532,4 @@ summary(bestmod)
 #
 # Number of Observations: 105
 # Number of Groups: 5
+
