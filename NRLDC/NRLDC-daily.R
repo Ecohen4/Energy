@@ -5,7 +5,8 @@
 ## Table 5:
 
 ## Set working directory
-setwd("/Users/elliotcohen/Dropbox/data/Electricity/NRLDC/csv")
+# setwd("/Users/elliotcohen/Dropbox/data/Electricity/NRLDC/csv")
+setwd("~/github/Energy/r/archive/")
 
 ## read-in csv files from NRLDC html data scapring (Chris Tan and Myf March 2014)
 options(stringsAsFactors=FALSE)
