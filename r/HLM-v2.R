@@ -114,7 +114,7 @@ cX<-as.data.frame(cbind(cX1,cX2,cX3))
 ## First fit a simple linear regression, for comparison with HLM
 ##################
 ## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
-bestLM<-bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
+bestLM <- bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
 GLMdiagnostics(bestLM)       # standard diagnostic tests
 AICbestlm<-extractAIC(bestLM)  # let simple lm be the null model. (AIC=290.93)
 summary(bestLM)
@@ -152,6 +152,7 @@ summary(bestLM)
 # AIC: 279.42
 
 ## Visual inspection of fitted vs. observed response
+par(mfrow=c(1,1))
 plot(bestLM$fitted.values, log(ENS))
 
 ##################
@@ -204,7 +205,25 @@ summary(lm2)
 # Number of Fisher Scoring iterations: 2
 
 ## Visual inspection of fitted vs. observed response
+par(mfrow=c(1,1))
 plot(lm2$fitted.values, log(ENS))
+
+##################
+## Now try a two-tier GLS with augmented covariance matrix
+##################
+naive <- lm(formula = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
+            data = scaledat)
+
+gls1 <- gls(model = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
+           data = scaledat,
+           correlation = corAR1(form = ~1 | Beneficiary),
+           method = "ML")
+
+anova(gls1, naive)
+plot(gls1)  # standard diagnostic tests
+AICbestGLS <- extractAIC(gls1)  # let simple lm be the null model. (AIC=290.93)
+summary(gls1)
+
 
 #####################
 # Fit a mixed-effects model with random intercepts and fixed slopes --> USE THIS
@@ -214,12 +233,12 @@ plot(lm2$fitted.values, log(ENS))
 # Use Maximum Likelihood (method="ML") instead of REML to compare models with different fixed effects (e.g. different predictor sets).
 
 ## Model ENS ~ fn(Structural constraints only)
-nullmod<-lme(ENS ~ CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
+nullmod <- lme(ENS ~ CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
 summary(nullmod)
 # HLMdiagnostics(nullmod)        # modify GLMdiagnostics() for HLM...
 
 ## Alternate model: add climate and supply chain constraints... do AIC/BIC improve?
-altmod<-lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
+altmod <- lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
 summary(altmod)
 
 # Does the model improve significantly with the addition of envt + sc variables?  --> YES.
@@ -232,21 +251,21 @@ anova(nullmod,altmod)
 # Note: log-likelood test is the same for un-scaled, scaled or centered predictors!
 
 # Model ENS ~ fn(environmental + supply-chain constraints only)
-bestmod<-lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
+bestmod <- lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
 summary(bestmod)
 
 # Are structural variables even necessary? --> NO.
 # Log-likelihood ratio test: ENS~fn(structural + envt + sc) vs ENS~fn(envt + sc)
 # Log-likelihood ratio test should be used for nested models only, e.g. when one model is a subset of the other.
-anova(altmod,bestmod)
-
-#       Model df   AIC       BIC       logLik    Test    L.Ratio   p-value
-# altmod    1 15   276.7309  316.5403 -123.3654
-# bestmod   2 11   277.5254  306.7190 -127.7627  1 vs 2  8.794546  0.0664
-# Interpretation: simpler model (structural vars removed) is not significantly different than more complex model at the 95% CI.
+anova(nullmod, altmod,bestmod)
+#         Model df      AIC      BIC    logLik   Test  L.Ratio p-value
+# nullmod     1  7 320.8683 339.4460 -153.4341
+# altmod      2 15 274.3822 314.1916 -122.1911 1 vs 2 62.48606  <.0001
+# bestmod     3 11 277.5254 306.7190 -127.7627 2 vs 3 11.14320   0.025
+# Interpretation: simpler model (structural vars removed) **is** significantly different than more complex model at the 95% CI.
 
 # compare AIC across models
-bestlm.AIC<-extractAIC(bestLM)[2]  # OLS with structural + climate + sc
+bestlm.AIC <- extractAIC(bestLM)[2]  # OLS with structural + climate + sc
 lm1.AIC<-extractAIC(lm1)[2]        # OLS w. structural only
 lm2.AIC<-extractAIC(lm2)[2]        # Second-tier OLS w. climate + sc variables regressed on the residuals of lm1.
 
