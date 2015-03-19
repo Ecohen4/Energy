@@ -2,7 +2,8 @@
 
 ## Set your wd() to the dropbox folder I sent you....
 # setwd("~/github/Energy/r/myModelDiagnostics.R")
-setwd("/Users/elliotcohen/Dropbox/UCD-MIT collaboration/R_commands/HLM")
+# setwd("/Users/elliotcohen/Dropbox/UCD-MIT collaboration/R_commands/HLM")
+setwd("/Users/elliotcohen//github/Energy/r/")
 
 ## call libraries
 library(nlme)     # HLM
@@ -86,11 +87,17 @@ scatterplot(X=X3, Y=Y, Xtransform=NULL, Ytransform="log") # unscaled predictors
 scatterplot(X=X3, Y=Y, Xtransform="scale", Ytransform="log") # scaled predictors
 scatterplot(X=X3, Y=Y, Xtransform="center", Ytransform="log") # centered predictors
 
+hist(X2$P_Anomaly_mm) # leptokertoctic? But fine to use as is.
+hist(X2$P_Act_mm)  # Strictly positive. But fine to use as is.
+
 #########################
 ## Choose a data transformation based on the scatterplots
 #########################
 # log-response, unscaled predictors
 logdat<-cbind(ID,log(Y),X)
+
+# log-response, unscaled predictors
+log.scale.dat<-cbind(ID,log(Y),scale(X))
 
 # log-response, scaled predictors
 scaledat<-cbind(ID,log(Y),scale(X))
@@ -114,10 +121,17 @@ cX<-as.data.frame(cbind(cX1,cX2,cX3))
 ## First fit a simple linear regression, for comparison with HLM
 ##################
 ## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
-bestLM <- bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
-GLMdiagnostics(bestLM)       # standard diagnostic tests
-AICbestlm<-extractAIC(bestLM)  # let simple lm be the null model. (AIC=290.93)
-summary(bestLM)
+## Naive Model: OLS with all predictors.
+log.scale.dat <- subset(log.scale.dat, select = -Beneficiary)
+lm0 <- lm(ENS ~ . , data=log.scale.dat) # fit to all the predictors.
+
+# lm0 <- lm(log(ENS) ~ CapAdequacy + TB_PAFM + UIsum.LRS + PctGrid + IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + Total_WWF, data = scaledat)
+
+# bestLM <- bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
+
+# GLMdiagnostics(lm0)       # standard diagnostic tests
+AIClm0<-extractAIC(lm0)  # let simple lm be the null model. (AIC=290.93)
+summary(lm0)
 
 ## results of simple linear regression with all the predictors
 # periodic autocorrelation observed, though not above the critical threshold value.
@@ -153,19 +167,25 @@ summary(bestLM)
 
 ## Visual inspection of fitted vs. observed response
 par(mfrow=c(1,1))
-plot(bestLM$fitted.values, log(ENS))
+plot(bestLM$fitted.values, log(ENS)) # log-space --> look at adjusted R^2 (goodness of fit) in log-space!
+plot(exp(bestLM$fitted.values), ENS) # back-transformed
 
 ##################
-## Next try a two-tier linear regression, for comparison with HLM
+## Next try a two-stage OLS, for comparison with HLM
 ##################
 ## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
-lm1 <- bestGLM(X=X1, Y=log(Y))
-GLMdiagnostics(lm1)       # standard diagnostic tests
+ols1.1 <- lm(ENS ~ CapAdequacy + TB_PAFM + UIsum.LRS + PctGrid , data=log.scale.dat) # fit to all the predictors.
+
+ols1.2 <- lm(lm1.1$residuals ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + Total_WWF, data=log.scale.dat) # fit to all the predictors.
+
+summary(ols1.1)
+summary(ols1.2)
+# GLMdiagnostics(lm1.1)       # standard diagnostic tests
+# GLMdiagnostics(lm1.2)       # standard diagnostic tests
 
 ## Visual inspection of fitted vs. observed response
 plot(lm1$fitted.values, log(ENS))
 
-summary(lm1)
 # autocorrelation up to lag 3 above the critical threshold.
 # Distribution of residuals look good.
 
@@ -211,15 +231,32 @@ plot(lm2$fitted.values, log(ENS))
 ##################
 ## Now try a two-tier GLS with augmented covariance matrix
 ##################
-naive <- lm(formula = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
-            data = scaledat)
+# log-response, unscaled predictors
+log.scale.dat<-cbind(ID,log(Y),scale(X))
 
-gls1 <- gls(model = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
-           data = scaledat,
-           correlation = corAR1(form = ~1 | Beneficiary),
-           method = "ML")
+gls1.1 <- gls(model = ENS ~ CapAdequacy + TB_PAFM + UIsum.LRS + PctGrid ,
+            data=log.scale.dat,
+            correlation = corAR1(form = ~1 | Beneficiary),
+            method = "ML") # fit to L1 predictors.
 
-anova(gls1, naive)
+resids <- as.numeric(gls1.1$residuals)
+
+gls1.2 <- gls(model = resids ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + Total_WWF,
+              data=log.scale.dat,
+              correlation = corAR1(form = ~1 | Beneficiary),
+              method = "ML") # fit to remaining predictors.
+
+# naive <- lm(formula = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
+#             data = scaledat)
+#
+# gls1 <- gls(model = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
+#            data = scaledat,
+#            correlation = corAR1(form = ~1 | Beneficiary),
+#            method = "ML")
+
+anova(lm0, gls1.1, ols1.1)
+anova(gls1.2, ols1.2)
+
 plot(gls1)  # standard diagnostic tests
 AICbestGLS <- extractAIC(gls1)  # let simple lm be the null model. (AIC=290.93)
 summary(gls1)
