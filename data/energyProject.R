@@ -5,7 +5,11 @@ library(ggplot2)
 # Import energy data files
 setwd("~/energy/data/demand")
 temp <- list.files(pattern="*.csv")
+temp <- c(temp[1:3], temp[5:7], temp[9:length(temp)])
 myfiles <- lapply(temp, read.csv)
+attach(myfiles[[10]])
+myfiles[[10]] <- myfiles[[10]][order(city, YR, M, D, HR),]
+detach()
 
 # Combine all data.frames in list into single data.frame
 df <- rbind.fill(myfiles)
@@ -14,7 +18,7 @@ df <- rbind.fill(myfiles)
 df$MIN[which(is.na(df$MIN))] <- 0
 
 # Drop granular data to get only hourly data, drop MWh column as some cities don't have that data
-df <- subset(df, MIN == 0, select=-MWh)
+# df <- subset(df, MIN == 0)
 
 # Format date / time
 df$date <- ISOdate(df$YR, df$M, df$D, df$HR)
