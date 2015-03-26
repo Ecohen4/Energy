@@ -1429,8 +1429,10 @@ data$PLF<-data$Available/(data$Grand_Total/1000*24*data$daypermon)
 #######################################
 #### Peak (Statewise, Monthwise, peak demand, avaialble and surplus)
 #######################################
+# setwd("/Users/elliotcohen//github/Cohen-McCreight/India-power-stns/")
+setwd("/Users/elliotcohen//github/Energy/r/")
 load("Peak.rsav")
-load("IEX.rsav")
+load("IEX.rdata")
 data<-merge(IEX, Peak, by=c("State", "Date","POSIXct"))
 dim(data)  #216 x 18
 save(data, file="data.rsav")

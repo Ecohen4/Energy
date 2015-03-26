@@ -32,40 +32,46 @@ dim(data2)
 head(data2)
 str(data2)
 
-## define predictor variable sets
-structural<-c("CapAdequacy","TB_PAFM","UIsum.LRS","PctGrid")
-envt<-c("IB_MAXTEMP","P_Anomaly_mm","P_Act_mm","HotDry")
-sc<-c("Coal_Stock_Days","gas_eff_FAF","Hydro_eff_Storage", "Total_WWF")
+## define predictor sets
+structural <- c("CapAdequacy","TB_PAFM","UIsum.LRS","PctGrid")
+envt <- c("IB_MAXTEMP","P_Anomaly_mm","P_Act_mm","HotDry")
+sc <- c("Coal_Stock_Days","gas_eff_FAF","Hydro_eff_Storage", "Total_WWF")
 
-Xvars<-c(structural, envt, sc)      # predictor variables (X names)
-X<-data2[names(data2) %in% Xvars]   # predictor values (X data)
+## seperate level 1 and level 2 predictor sets into seperate data frames
+X1 <- data2[names(data2) %in% structural]
+X2 <- data2[names(data2) %in% envt | names(data2) %in% sc]
 
-Yvar<-"ENS" # response variable (choose RNS, EIR, RNS, etc.)
-Y<-data2[names(data2) %in% Yvar]     # response values (Y data)
-n<-dim(Y)[1]                         # sample size
-
-ENS<-data2$ENS      # Alternate name for response variable Y
-
-## define grouping variables
-# IDvars<-c("Beneficiary","Date")    # index vars (i,j)
-IDvars<-c("Beneficiary")             # condition on Beneficiary (i) only, not month (j)
-ID<-data2[names(data2) %in% IDvars]  # index values
-
-vars<-c(Xvars,Yvar,IDvars)           # all the variable names
-data<-data2[names(data2) %in% vars]  # all the variable data (e.g. model data)
-names(data)                          # show the variable names
-
-## Define structural, envt and sc predictor sets as three seperate data frames, X1, X2, X3 (for reference)
-X1<-data2[names(data2) %in% structural]
-X2<-data2[names(data2) %in% envt]
-X3<-data2[names(data2) %in% sc]
-
-## Assign "pretty names", if desired...
+## assign "pretty names", if desired...
 names(X1)
 names(X1)<-c("PctGrid", "FAF", "Cap_Inadeq.", "UI_Cost")
 # names(X1)<-c("Imports", "Utilization", "Availability", "Inadequacy", "DSM")
 
 data2<-droplevels(data2)
+
+Xvars <- c(structural, envt, sc)      # predictor sets (X names)
+X <- data2[names(data2) %in% Xvars]   # predictor matrix (X data)
+# X <- as.matrix(X) # convert from data.frame to matrix
+
+## define response vector
+Yvar <- "RNS" # response variable (choose RNS, EIR, RNS, etc.)
+Y <- data2[[Yvar]] # response values (Y data)
+n <- length(Y)     # sample size
+
+ENS <- data2$ENS # Alternate variable for response vector Y
+RNS <- data2$RNS # Alternate variable for response vector Y
+EIR <- data2$EIR # Alternate variable for response vector Y
+
+
+## define grouping variables
+# IDvars<-c("Beneficiary","Date") # index vars (i,j)
+IDvars <- c("Beneficiary")        # condition on Beneficiary (i) only, not month (j)
+ID <- data2[names(data2) %in% IDvars]  # index values
+
+## combine predictor matrix, response vector and grouping vector
+vars <- c(Xvars,Yvar,IDvars)          # all the variable names
+data <- data2[names(data2) %in% vars] # all the variable data (e.g. model data)
+names(data)                           # show the variable names
+
 ###########################
 # look at the scatterplots
 ############################
