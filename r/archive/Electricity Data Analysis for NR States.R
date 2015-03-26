@@ -1431,9 +1431,32 @@ data$PLF<-data$Available/(data$Grand_Total/1000*24*data$daypermon)
 #######################################
 # setwd("/Users/elliotcohen//github/Cohen-McCreight/India-power-stns/")
 setwd("/Users/elliotcohen//github/Energy/r/")
-load("Peak.rsav")
-load("IEX.rdata")
-data<-merge(IEX, Peak, by=c("State", "Date","POSIXct"))
+load("archive/Peak.rdata")
+load("archive/IEX.rdata")
+
+IEX <- read.csv("/Users/elliotcohen//Dropbox/data/Electricity/CEA/Data/IEX-2011-13.csv")
+
+date <- paste(IEX$Year, IEX$Month, 15, sep="-")
+IEX$Date <- as.Date(date)
+
+# Compute Energy Index of Reliability (EIR = Available/Requirement)
+IEX$EIR <- IEX$Available/IEX$Requirement
+
+# Compute Energy Not Supplied (ENS = Requirement-Available)
+IEX$ENS <- IEX$Requirement-IEX$Available
+
+# Compute Requirement Not Supplied (RNS = (Requirement-Available)/Requirement)
+IEX$RNS <- (IEX$Requirement-IEX$Available)/IEX$Requirement
+
+# Compute percent Available met by OwnGen and from Grid, respectively.
+IEX$PctLocal <- round((IEX$OwnGen/IEX$Available)*100, digits=2)
+IEX$PctGrid <- round(IEX$NetDrawalFromGrid/IEX$Available*100,digits=2)
+PctCheck <- IEX$PctLocal+IEX$PctGrid
+summary(PctCheck)
+
+save(IEX, file="IEX.rdata")
+
+data <- merge(IEX, Peak, by=c("State", "Date"))
 dim(data)  #216 x 18
 save(data, file="data.rsav")
 
