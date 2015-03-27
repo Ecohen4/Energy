@@ -129,6 +129,7 @@ cX<-as.data.frame(cbind(cX1,cX2,cX3))
 ## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
 ## Naive Model: OLS with all predictors.
 log.scale.dat <- subset(log.scale.dat, select = -Beneficiary)
+
 lm0 <- lm(ENS ~ . , data=log.scale.dat) # fit to all the predictors.
 
 # lm0 <- lm(log(ENS) ~ CapAdequacy + TB_PAFM + UIsum.LRS + PctGrid + IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + Total_WWF, data = scaledat)
