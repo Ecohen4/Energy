@@ -1,6 +1,6 @@
 # Spatio-Temporal Downscaling of Energy Demand Forecasts
 
-	Any use of data from this repository must be cited as:
+	Use of data from this repository must be cited as:
 	
 	Cohen, Elliot, Vijay Modi, Henri Torbey, Michael Piccirelli and Yu-Tian (2015).  
 	Global Trends in Urban Energy Use. Working Paper of the Sustainable Engineering Lab,   
