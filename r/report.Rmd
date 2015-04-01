@@ -444,7 +444,7 @@ ggplot() +
   scale_colour_gradient(low="white", high="red", limits=quantile(decadal$Growth, probs=c(0.0, 1))) 
 ```
 
-```{r urbanization_PDF, fig.width=8, fig.height=4}
+```{r urbanization_PDF, fig.width=7, fig.height=4}
 ###### Begin Plot Population Growth Densities by Region ######
 test<-subset(cities, Year==2015)
 sm.density.compare(test$Growth, test$region, xlab="% Change (Annual)", xlim=quantile(test$Growth, probs=c(0.0,.99)))
