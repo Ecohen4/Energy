@@ -15,7 +15,7 @@ output:
 ***
 
 ```{r setup, echo=FALSE, include=FALSE}
-## set working director
+## set working directory
 setwd("~/Google Drive/Global_Trends/GTUCH/")
 
 require("knitr")
@@ -34,7 +34,8 @@ require("pander")
 require("scatterplot3d")
 
 
-opts_chunk$set(fig.path='Figs/', fig.align="center", fig.width=7, fig.height=5, echo=FALSE, cache=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+opts_chunk$set(fig.path='Figs/', fig.align="left", echo=FALSE, cache=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+
 options(stringsAsFactors=FALSE)
 ```
 
@@ -387,6 +388,7 @@ Population growth, economic growth and the income elasticity of energy services 
 
 ```{r read_urbanization_data, warning=FALSE, eval=TRUE}
 # setwd("~/Google Drive/Global_Trends/Data/UN_Population_Data/")
+setwd("~/Google Drive/Global_Trends/GTUCH/")
 load("cities.rsav") # population and growth rate data for global cities with pop > 750k
 ```
 
@@ -404,7 +406,7 @@ ggplot() +
   geom_hline(y=-38, linetype=3, size=0.2) +
   geom_hline(y=38, linetype=3, size=0.2) +
   geom_point(data=subset(cities, Period=="2010-2015"), aes(x=Longitude, y=Latitude, colour=Growth.Quartile, size=Pop./10^3)) +
-#   coord_equal() +
+  coord_equal() +
   scale_y_continuous(breaks=(-2:2) * 30) +
   scale_x_continuous(breaks=(-4:4) * 45) +
   labs(colour = 'Urbanization Rate', size="Population (Millions)", title="Rapid Urbanization Throughout the Tropics and Subtropics") +
@@ -414,7 +416,7 @@ ggplot() +
 ###### End Population and Urbanization Rates ######
 ```
 
-```{r urbanization_map_evolution, fig.width=10, fig.height=5, eval=FALSE}
+```{r urbanization_map_evolution, eval=FALSE}
 # base map
 world <- map_data("world")
 worldmap <- ggplot(world, aes(x=long, y=lat, group=group)) +
@@ -442,7 +444,7 @@ ggplot() +
   scale_colour_gradient(low="white", high="red", limits=quantile(decadal$Growth, probs=c(0.0, 1))) 
 ```
 
-```{r urbanization_PDF, fig.width=7, fig.height=4}
+```{r urbanization_PDF, fig.width=8, fig.height=4}
 ###### Begin Plot Population Growth Densities by Region ######
 test<-subset(cities, Year==2015)
 sm.density.compare(test$Growth, test$region, xlab="% Change (Annual)", xlim=quantile(test$Growth, probs=c(0.0,.99)))
@@ -499,30 +501,28 @@ The objective of this study is to answer four key research questions:
 
 ## Data
 
-The 1st step was to collect high resolution (hourly) load, climate and population data for as many cities as possible.
+This study combines high resolution (hourly) electricity demand and meteorological data with annual census information for 50+ global cities.
 
-The starting point for emerging megacities was the UN World Urbanization Prospects 2014 list of cities, subsetted by the 100 cities of more than 2M habitants with the highest population growth rate for the next 5 years (2015-2020). Concerning cities in the North, data for US cities were collected from the Federal Energy Regulatory Commission and US Energy Information Administration databases. 
+The starting point for identifying major emerging cities was the UN World Urbanization Prospects (2014), subset to the 100 fastest growing cities with more than 2M inhabitants. For comparison, data for US cities was collected from the Federal Energy Regulatory Commission and the US Energy Information Administration. 
 
 
-| City        | Country             | Load          | Weather       | Population    |
-|-------------|---------------------|---------------|---------------|---------------|
-|             |                     | Years (ref)   | Years (ref)   | Years (ref)   |
-|             |                     |---------------|---------------|---------------|                     
-| Abidjan     | Cote d'Ivoire       | 2010-2013 (a) | 2010-2013 (m) | 1990-2030 (n) |
-| Accra       | Ghana               | 2013-2014 (b) | 2010-2013 (m) | 1990-2030 (n) |
-| Amman       | Jordan              | 2011-2014 (c) | 2010-2013 (m) | 1990-2030 (n) |
-| Antigua     | Antigua and Barbuda | 2011-2011 (d) | 2010-2013 (m) |     -         | 
-| Beirut      | Lebanon             | 2011-2014 (e) | 2010-2013 (m) | 1990-2030 (n) |
-| Chandigarh  | India               | 2011-2013 (d) | 2010-2013 (m) | 1990-2030 (n) |
-| Dakar       | Senegal             | 2011-2014 (f) | 2010-2013 (m) | 1990-2030 (n) |
-| Delhi       | India               | 2012-2013 (e) | 2010-2013 (m) | 1990-2030 (n) |
-| Manila City | Philippine          | 2011-2013 (g) | 2010-2013 (m) | 1990-2030 (n) |
-| Mbabane     | Swaziland           | 2012-2014 (h) | 2010-2013 (m) |     -         |
-| Nairobi     | Kenya               | 2011-2013 (i) | 2010-2013 (m) | 1990-2030 (n) |
-| Singapore   | Singapore           | 2013-2013 (j) | 2010-2013 (m) | 1990-2030 (n) |
-| Tema        | Ghana               | 2012-2013 (b) | 2010-2013 (m) |     -         |
-| Tokyo       | Japan               | 2008-2014 (k) | 2010-2013 (m) | 1990-2030 (n) |
-| U.S. cities | U.S                 | 2006-2013 (l) | 2010-2013 (m) | 2001-2013 (o) |
+| City           | Country             | Load          | Weather       | Population    |
+|----------------|---------------------|---------------|---------------|---------------|                     
+| Abidjan        | Cote d'Ivoire       | 2010-2013 (a) | 2010-2013 (m) | 1990-2030 (n) |
+| Accra          | Ghana               | 2013-2014 (b) | 2010-2013 (m) | 1990-2030 (n) |
+| Amman          | Jordan              | 2011-2014 (c) | 2010-2013 (m) | 1990-2030 (n) |
+| Antigua        | Antigua and Barbuda | 2011-2011 (d) | 2010-2013 (m) |     -         | 
+| Beirut         | Lebanon             | 2011-2014 (e) | 2010-2013 (m) | 1990-2030 (n) |
+| Chandigarh     | India               | 2011-2013 (d) | 2010-2013 (m) | 1990-2030 (n) |
+| Dakar          | Senegal             | 2011-2014 (f) | 2010-2013 (m) | 1990-2030 (n) |
+| Delhi          | India               | 2012-2013 (e) | 2010-2013 (m) | 1990-2030 (n) |
+| Manila City    | Philippine          | 2011-2013 (g) | 2010-2013 (m) | 1990-2030 (n) |
+| Mbabane        | Swaziland           | 2012-2014 (h) | 2010-2013 (m) |     -         |
+| Nairobi        | Kenya               | 2011-2013 (i) | 2010-2013 (m) | 1990-2030 (n) |
+| Singapore      | Singapore           | 2013-2013 (j) | 2010-2013 (m) | 1990-2030 (n) |
+| Tema           | Ghana               | 2012-2013 (b) | 2010-2013 (m) |     -         |
+| Tokyo          | Japan               | 2008-2014 (k) | 2010-2013 (m) | 1990-2030 (n) |
+| 21 U.S. cities | U.S                 | 2006-2013 (l) | 2010-2013 (m) | 2001-2013 (o) |
 
 (a): Autorite Nationale de Regulation du Secteur de l'Electricite 
 (b): Ghana Grid Company 
@@ -540,19 +540,31 @@ The starting point for emerging megacities was the UN World Urbanization Prospec
 (n): United Nations World Urbanization Porspects - 2014
 (o): US Bureau of Economic Analysis
 
-### Weather Data
-The National Oceanic and Atmospheric Administration (NOAA) offers a variety of free meteorological and climatological information through the National Climatic Data Center. The data is available on the Online Climate Data Directory website, available via FTP, which can be downloaded and efficiently processed in R. The closest weather stations to cities of interest were chosen, and invalid data (missing values, 999s and NAs) were either interpolated or omitted. The final set of hourly data collected is: Temperature, Wind Speed, Wind Direction, Dew Point Temperature and Atmospheric Pressure. 
+#### Weather Data
+High-resolution weather data are indespensible to accurate energy demand forecasts (Segal et al. 1992; Sailor 2001; Crowley et al. 2003; Thatcher 2007). Fortunately, national weather services and climate information centers such as the U.S. National Oceanic and Atmospheric Administration (NOAA), Britain's Met Office, and India's Institute for Tropical Meteorology (IITM), collect, curate, analyze and publish meteorological data from thousands of weather stations worlwide. 
 
-### Demand Data
-High resolution hourly load data for the past 4 years (on average - could be less or more for some cities) was collected from utility companies, system operators and electricity regulatory bodies.
+NOAA offers a wealth of meteorological/climatological information through the NCDC data portal. The data is available on the [Online Climate Data Directory](http://www.ncdc.noaa.gov/cdo-web/) website. It is also available via FTP, which is more effecient for batch queries, and is the method used here. 
 
-Data was obtained for 21 US cities **(check number)** and 13 emerging megacities **(check number)** in the Tropics/Subtropics. 
+However, handling large meteorological datasets can be unweildy to the uniitiated. To address this issue and make meteorological data more accessible to a wider range of scientists, engineers and practicioners, we developed the `weatheR` libary for the statistical computing language R. The `WeatheR` libary dramatically simplifies, streamlines and improves the reproducability of our current work. Complete methodological details, step-by-step instructions and example vignettes are available on our [github page](http://ecohen4.github.io/Cohen-McCreight/weatheR.html).
 
-### Population Data
-Population data was collected from the UN World Urbanization Prospects 2014 edition and from the US Bureau of Economic Analysis. It is used to normalize energy demand and consumption to a per capita level, as per the *Method* section. 
+Breifly, weather data was collected as follows:
+
+* Cities of interest are geo-referenced via the Google Maps API.
+* City coordinates are passed into a nearest-neighbor search algorithim to the find the k-nearest active weather stations.
+* "Best" neighbor is selected from the k-nearest neighbors using multi-objective criteria of geographic proximity and completeness of the meteorological record.
+* "Best" meteorlogical record is chosen, subset, scrubbed and interpolated to yield hourly temperature and humidity observations for each city and period of interest.
 
 
-## Method and Key Concepts
+#### Demand Data
+Hourly electricity demand data was collected from utility companies, system operators or electricity regulatory bodies serving the cities of interest. Data was collected for the past 3 years, if possible.
+
+Data was obtained for 18 non-OECED cities and 21 OECD cities. [Note: The National Capital Territory of Delhi (population 23 million) is served by five geographically-distinct distribution companies and is thus considered as five seperate cities].
+
+#### Population Data
+Population data was collected from the UN World Urbanization Prospects (2014) and from the US Bureau of Economic Analysis. It is used to normalize energy demand and consumption to a per capita level, as per the *Methods* section. 
+
+
+## Methods
 
 Two main analyses are performed in this contribution for all the cities/year for which data has been collected. The first one consists in estimating the sensitivity of the daily peak demand of electricity to temperatures, and the second one consists in estimating the amount of energy consumed for thermal-comfort seeking (cooling and heating). The below sections detail the key concepts and methodology used to obtain these estimations. 
 
@@ -575,22 +587,24 @@ In other words, CDH and HDH represent the number of degrees per year that requir
 
 ### Temperature-Load Curve (TLC) & Threshold Temperature (Tt)
 
-Because there is usually reduced economic and commercial activities on weekends compared to weekdays, demand for electricity is expected to be lower on weekends. To avoid this noise in the analyses, corresponding observations are omitted. 
-
 Starting with the high-resolution hourly temperature and load data collected, and making them correspond by date/time of observation, the temperature-load profile of every city-year combination can be obtained. Testing and iterations has showed that to obtain a solid profile suitable for a regression fit, city-year data needed to be for at least the equivalent to 3 month of observations to catch the seasonal trend. Therefore all the collected data were filtered to this criteria and a small number of city-year combinations were lost as a consequence.  
+
+Economic activity is typically lower on weekends compared to weekdays, and electricity demand is commensurately lower. To avoid this noise in the analyses, corresponding observations are omitted.
+
 Plotting the load against the temperature gives the Temperature-Load Curve (TLC). Depending on the climate of the cities considered, this profile can either have a "V" shape, a linear shape or a "cloud" shape. To illustrate this, we consider the TLC for New York City and Dakar in 2012.
 
 The below leftward figure is a clear "V" shape temperature-load profile for New York City, 2012. The right side of the curve represents the cooling regime: as temperatures increase, demand for electricity increases because of cooling requirements. The cooling regime, and therefore the city's sensitivity to high temperatures is characterized by a positive coefficient called the cooling coefficient. The left side of the curve represents the heating regime: as temperatures increase, demand for electricity increases because of heating requirements (although the main heating requirements are met by natural gas and not electricity, some heating applicances do use electricity). The city's sensitivity for cold temperatures is characterized by a negative coefficient called the Heating Coefficient, which tends to be lower in absolute terms than the Cooling Coefficient. The temperature that separates the cooling and the heating regime is called the Threshold Temperature. It is the temperature above which the direction of change of electricity demand changes. In other words, it is the observed 'comfortable' temperature above which perople start cooling and under which people start heating. 
 
 In contrast, the below rightward figure has a clear linear shape TLC for Dakar, 2012. This shape indicates that the city is in the cooling regime only as temperatures are on average very high. A "cloud" shape TLC would be similar to Dakar's TLC, but whithout apparent and significant relation between load and temperature (this would typically be represented by a near horizontal 'cloud' distribution of datapoints on the TLC). It must be noted the concept of threshold temperature doesn't apply for a city that doesn't have both cooling and heating regime. Therefore there is no threshold temperature for linear and cloud TLC cities. 
 
-```{r,fig.width=10, fig.height=3,echo=FALSE}
+```{r,fig.width=10, fig.height=5,echo=FALSE}
 nyc <- hourly[which(hourly$city=="New York City" & hourly$yr==2012),]
 dakar <- hourly[which(hourly$city=="Dakar" & hourly$yr==2012),]
 p1 <- ggplot()+
   geom_point(data=nyc, aes(x=temperature, y=mw))+xlab("Temperature (DegC)")+ylab("Demand (MW)")+labs(title="Temperature-load profile for NYC")+ylim(0,12500)+theme_bw() 
 p2 <- ggplot()+
   geom_point(data=dakar,aes(x=temperature,y=mw))+xlab("Temperature (DegC)")+ylab("Demand (MW)")+labs(title="Temperature-load profile for Dakar")+ylim(0,600)+theme_bw() 
+
 pushViewport(viewport(layout = grid.layout(1, 2)))
 print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
@@ -604,32 +618,37 @@ This section aims at quantifying the relation between load and temperature. Star
 
 The below leftward fitting shows the segmented fitting for New York City and the below rightward figure shows the linear fitting for Dakar. The coefficients (Heating and/or Cooling), their significance and the x-coordinnate of the break-point are extracted and saved for every city at every year. The x-coordinnate of the break-point is simply the threshold temperature. 
 
-```{r,echo=FALSE,fig.width=3, fig.height=3, message=FALSE,warning=FALSE}
+```{r,echo=FALSE, fig.width=10, fig.height=5, message=FALSE, warning=FALSE}
 dakar <- ddply(dakar, .(city,yr,m,d), function(x) x[x$mw == max(x$mw),])
 nyc <- ddply(nyc, .(city,yr,m,d), function(x) x[x$mw == max(x$mw),])
 linear.dakar <- lm(mw~temperature,data=dakar)
 linear.nyc <- lm(mw~temperature,data=nyc)
 segmented.nyc <- segmented(linear.nyc, seg.Z=~temperature, psi=list(temperature=20), control=seg.control(display=FALSE))
 
+par(mfrow=c(1,2))
 t <- plot(nyc$temperature,nyc$mw, main="Segmented regression for NYC", xlab="Temperature (DegC)", ylab="Demand (MW)")+plot(segmented.nyc,add=TRUE,res=FALSE,link=TRUE,col="green",size=0.9)
 
 q <- plot(dakar$temperature,dakar$mw, main="Linear regression for Dakar", xlab="Temperature (DegC)", ylab="Demand(MW)") + abline(linear.dakar,col="green")
+
+# pushViewport(viewport(layout = grid.layout(1, 2)))
+# print(t, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(q, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 ```
 
 The above being done for the daily peak load dataset, the same procedure is repeated for the 2nd dataset containing subsets at every hour of the day. The coefficients (Heating and/or Cooling), their significance and the threshold temperature are extracted and saved for every city at every year and at every hour of the day (00hr to 23hr). The below figure illustrates this procedure: 
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE}
+```{r,echo=FALSE,message=FALSE,warning=FALSE, fig.width=10, fig.height=10}
 nyc <- hourly[(hourly$city=="New York City" & hourly$yr==2012),]
 cc.list.yr <- dlply(nyc, .(city,yr,hr), function(x) getSeg.hr(x))
 
 hourly.plot <- nyc
 hourly.plot$hr <- as.factor(hourly.plot$hr)
 
-par(mfrow=c(5,5))
+par(mfrow=c(6,4))
 par(oma=c(0,0,0,0))
 par(mar=c(2,2,2,2)) #5,4,4,2
 for (i in 1:length(levels(hourly.plot$hr))){  
-  plot(hourly.plot$temperature[which(hourly.plot$hr==levels(hourly.plot$hr)[i])],hourly.plot$mw[which(hourly.plot$hr==levels(hourly.plot$hr)[i])], xlab="Temperature",ylab="MW",main=paste("NYC 2012, hour=",levels(hourly.plot$hr)[i],sep=""))
+  plot(hourly.plot$temperature[which(hourly.plot$hr==levels(hourly.plot$hr)[i])],hourly.plot$mw[which(hourly.plot$hr==levels(hourly.plot$hr)[i])], xlab="Temperature", ylab="MW", main=paste("NYC 2012, hour=",levels(hourly.plot$hr)[i],sep=""), ann=FALSE)
   if ((class(cc.list.yr[[i]])[[1]])[1]=="segmented"){
     plot(cc.list.yr[[i]], add=TRUE, res=FALSE, link=TRUE, col="green", size=6)
     } else if ((class(cc.list.yr[[i]])[[1]])[1]=="lm") {
@@ -680,13 +699,13 @@ summary.energy <- ddply(test1,.(city), function(x) x[x$yr == max(x$yr),])
 ```
 
 
-**Most recent Cooling/Heating Demand**
+**Cross-Sectional Analysis of Cooling/Heating Demand [MW/(deg. C)]**
 ```{r, results = 'asis'}
 kable(summary.gradients)
 # print(xtable(summary.gradients, caption='Cooling/Heating Demand (MW/DegC)'),comment = FALSE,include.rownames=FALSE)
 ```
 
-**Most recent Cooling/Heating Energy**
+**Cross-Sectional Analysis of Seasonal Cooling/Heating Energy [GWh/season]**
 ```{r, results = 'asis'}
 kable(summary.energy)
 # print(xtable(summary.energy, caption='Cooling/Heating Energy (MW/DegC)'),comment = FALSE,include.rownames=FALSE)
@@ -694,6 +713,36 @@ kable(summary.energy)
 
 
 ## Discussion and Implications for policy-makers
+
+References
+---------------
+[1] Segal M., Shafer H., Mandel M.. Alpert P., & Balmor V. (1992). Climatic-related evaluations of the summer peak-hours’ electrical load in Israel. *Journal of Applied Meteorology*, 31, 1492-1498.  
+[2] Christian Crowley., & Frederick L. Joutz. (2003). Hourly electricity loads: temperature elasticities and climate change. 23rd US Association of Energy Economics North American Conference.  
+[3] Marcus J. Thatcher. (2007). Modeling changes to electricity demand load duration curves as a consequence of predicted climate change for Australia. *Energy*, 32, 1647-1659.   
+[4] Bose, R.K., & M. Shukla. (1999). Elasticities of electricity demand in India. *Energy Policy*, 27(3), 137-146.   
+[5] Tiwari, P. (2000). Architectural, demographic, and economic causes of electricity consumption in Bombay. *Journal of Policy Modelling* 22(1), 81–98.  
+[6] Shonali Pachauri. (2004). An analysis of cross-sectional variations in total household energy requirements in India using micro survey data. *Energy Policy*, 32, 1723-1735. 
+[7] The World Bank. (2008). Residential Consumption of Electricity in India: Documentation of Data and Methodology.  
+[8] Pachauri, S. & Spreng, D. (2004) Energy Use and Energy Access in Relation to Poverty. *Economic and Political Weekly*, Vol. 39, No. 3 (Jan. 17-23, 2004), pp. 271-278  
+[9] Gupta, (2012). Global Warming and Electricity Demand in the Rapidly Growing City of Delhi: A Semi-Parametric Coefficient Approach, *Energy* <INCOMPLETE>  
+[10] Gupta, (2014). The Effect Of Development on the Climate Sensitivity of Electricity in India, Discussion Papers in Economics, Indian Statistical Institute, Delhi, India  
+[11] David J. Sailor., J, Ricardo Munoz. (1997). Sensitivity of electricity and natural gas consumption to climate in the USA—methodology and results for eight states. *Energy*, 22(10), 987-998.   
+[12] Joshua D. Rhodes., Wesley J. Cole., Charles R. Upshaw., Thomas F. Edgar., & Michael E. Webber. Clustering analysis of residential electricity demand profiles. *Applied Energy*, 135, 461-471.   
+[13] Heck, S. & Rogers, M. (2014). Resource Revolution (1st Edition). New York: Houghton Mifflin Harcourt  
+[14] Smit,Remes, Manyika, Roxburgh, Restrepo (2011). Urban world: Mapping the economic power of cities. McKinsey Global Institue.  
+[15] IEA World Energy Outlook 2014 Factsheet   
+[16] Austin Energy. (2006). Residential Electricity burden: an investigation of American community survey data. <INCOMPLETE>  
+[17] David J. Sailor., J, Ricardo Munoz. (1997). Sensitivity of electricity and natural gas consumption to climate in the USA—methodology and results for eight states. Energy, 22(10), 987-998.  
+[18] Energy Information Administration. Electricity Power Monthly. http://www.eia.gov/ electricity/monthly/index.cfm   
+[19] Huang, Y. J., Ritschard, R., Bull, J., Chang, L. (1986), Climatic indicators for estimating residential heating and cooling loads. Lawrence Berkeley Laboratory, Report LBL-21 I01, Berkeley, CA.  
+[20] Joshua D. Rhodes., Wesley J. Cole., Charles R. Upshaw., Thomas F. Edgar., & Michael E. Webber. Clustering analysis of residential electricity demand profiles. *Applied Energy*, 135, 461-471.  
+[21] Li, X., Sailor, D.J.,(1995). Electricity use sensitivity to climate and climate change. *World Resource*, 7(3), 334-346.  
+[22] Massimo Filippini., & Shonali Pachauri. (2004). Elasticities of electricity demand in urban Indian households. *Energy Policy*, 32, 429-436.  
+[23] Sailor DJ. (2001). Relating residential and commercial sector electricity loads to climate —evaluating state level sensitivities and vulnerabilities. *Energy*, 26, 645-657.  
+[24] Scott, M.J., Wrech, L.E., Hadley, D.L. (1994). Effects of Climate Change on Commercial Building Energy Demand. *Energy Sources*, 16, 317-332.  
+[25] S. Mirasgedis., Y. Sarafidis., E. Georgopoulou., D.P. Lalas., M. Moschovits., F. Karagiannis., D. Papakonstantinou. (2006). Models for mid-term electricity demand forecasting incorporating weather influences. *Energy*, 31: 208–227.  
+[26] U.S. Census Bureau. (1995-present). American Community Survey. http://www.census.gov/acs/  
+[27] U.S. Census Bureau. Working at home is on the rise. http://www.census.gov/newsroom/releases/pdf/home_based_workers_us_infographic.pdf  
 
 
 
