@@ -340,25 +340,25 @@ wday <- strftime(date, format="%w") # Weekday as decimal number (0–6, Sunday i
 hourly$date <- date
 hourly$wday <- wday
 
+# remove Australian states because they are not urban agglomerations (e.g. cities).
 hourly <- hourly[!(hourly$city=="New South Wales" | hourly$city=="Queensland" | hourly$city=="South Australia" | hourly$city=="Victoria" ),]
 
 # saving a copy of hourly
-hourly1 <- hourly
+hourly.all.vars <- hourly
+
+# hourly1 <- hourly1[,c("city","yr","m","d","hr","temp","mw")]
+# colnames(hourly1)[6] <- "temperature"
 
 # subsetting by weekdays
-hourly <- hourly1[which(hourly1$wday==1 | hourly1$wday==2 | hourly1$wday==3 | hourly1$wday==4 | hourly1$wday==5 ),]
+hourly <- hourly[which(hourly$wday==1 | hourly$wday==2 | hourly$wday==3 | hourly$wday==4 | hourly$wday==5 ),]
 
-# subset and delete 0-load values
+# subset
 colnames(hourly)[6] <- "temperature"
 hourly <- subset(hourly, select=c("city", "yr", "m", "d", "hr", "temperature", "mw", "lat","scaled_mw"))
+
+# Omit 0-load values 
 hourly$mw[hourly$mw==0] <- NA
 hourly <- na.omit(hourly)
-
-hourly1 <- hourly1[,c("city","yr","m","d","hr","temp","mw")]
-colnames(hourly1)[6] <- "temperature"
-
-
-
 
 ## Population
 population <- read.csv("population.csv",header=TRUE)
@@ -369,10 +369,17 @@ gradients.all.scaled.max.yr <- read.csv("gradients.all.scaled.max.yr.csv", heade
 # Hourly gradients 
 gradients.hr.yr <- read.csv("gradients.yr.hr.csv",header=TRUE)
 
-hourly1.filtered <- ddply(hourly1, .(city, yr), function(x) filter(x, gradients.all.max.yr))
-
+hourly.filtered <- ddply(hourly, .(city, yr), function(x) filter(x, gradients.all.max.yr))
 ```
 
+```{r missing-data, echo=FALSE, results='hide'}
+which(! levels(as.factor(hourly$city)) %in% levels(as.factor(population$city)))
+get <- which(! levels(as.factor(hourly$city)) %in% levels(as.factor(population$city)))
+levels(as.factor(hourly$city))[get]
+
+#  "Antigua" "Beirut" "Delhi - BRPL" "Delhi - BYPL" "Delhi - MES"  "Delhi - NDMC" "Delhi - NDPL" "Kano" "Kupang" "Tema"    
+#  We can easily find these values... let's use them!
+```
 
 ## Motivation
 Many of the world's **largest** and **fastest-growing** cities--from Karachi (pop. 14 million; 34.6% increase from 2000-2010) to Delhi (22m; 39.4%), Dhaka (15m, 45.2%), Jakarta (10m; 14.8%), Bangkok (8m, 29.1%), Lagos (11m; 48.2%) and Kinshasa (9m, 55.4%)--are located in South Asia and Sub-Saharan Africa with tropical to sub-tropical climates unlike those of most OECD member cities in the global North. As the tropic/subtropic become increasingly urban, industrial and affluent, it is important to consider how energy demand--particularly for thermal comfort--will evolve differently in these places than it has historically across the OECD. 
@@ -463,6 +470,9 @@ Over the long run, we must consider the trajectory of economic development in em
 ### Drivers of Urban Energy Demand 
 Broadly speaking, economic activity (as measured by GDP) drives annual average energy use, climate drives seasonal variability, and human physiology and local weather drive diurnal variability. This study considers the latter two -- climate and weather.
 
+The three most common classes of energy forecast models are regression, time-series and econometric.
+
+Regression, Time-Series
 #### Climate Perspective in Energy Demand Forecasts
 Daily and seasonal variability in urban electricity demand is caused, to a large degree, by demand for cooling and heating, which is of course driven by meteorological factors (Segal et al.,1992; Thatcher, 2007).
 
