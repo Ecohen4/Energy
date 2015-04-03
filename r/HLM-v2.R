@@ -2,7 +2,8 @@
 
 ## Set your wd() to the dropbox folder I sent you....
 # setwd("~/github/Energy/r/myModelDiagnostics.R")
-setwd("/Users/elliotcohen/Dropbox/UCD-MIT collaboration/R_commands/HLM")
+# setwd("/Users/elliotcohen/Dropbox/UCD-MIT collaboration/R_commands/HLM")
+setwd("/Users/elliotcohen//github/Energy/r/")
 
 ## call libraries
 library(nlme)     # HLM
@@ -31,40 +32,46 @@ dim(data2)
 head(data2)
 str(data2)
 
-## define predictor variable sets
-structural<-c("CapAdequacy","TB_PAFM","UIsum.LRS","PctGrid")
-envt<-c("IB_MAXTEMP","P_Anomaly_mm","P_Act_mm","HotDry")
-sc<-c("Coal_Stock_Days","gas_eff_FAF","Hydro_eff_Storage", "Total_WWF")
+## define predictor sets
+structural <- c("CapAdequacy","TB_PAFM","UIsum.LRS","PctGrid")
+envt <- c("IB_MAXTEMP","P_Anomaly_mm","P_Act_mm","HotDry")
+sc <- c("Coal_Stock_Days","gas_eff_FAF","Hydro_eff_Storage", "Total_WWF")
 
-Xvars<-c(structural, envt, sc)      # predictor variables (X names)
-X<-data2[names(data2) %in% Xvars]   # predictor values (X data)
+## seperate level 1 and level 2 predictor sets into seperate data frames
+X1 <- data2[names(data2) %in% structural]
+X2 <- data2[names(data2) %in% envt | names(data2) %in% sc]
 
-Yvar<-"ENS" # response variable (choose RNS, EIR, RNS, etc.)
-Y<-data2[names(data2) %in% Yvar]     # response values (Y data)
-n<-dim(Y)[1]                         # sample size
-
-ENS<-data2$ENS      # Alternate name for response variable Y
-
-## define grouping variables
-# IDvars<-c("Beneficiary","Date")    # index vars (i,j)
-IDvars<-c("Beneficiary")             # condition on Beneficiary (i) only, not month (j)
-ID<-data2[names(data2) %in% IDvars]  # index values
-
-vars<-c(Xvars,Yvar,IDvars)           # all the variable names
-data<-data2[names(data2) %in% vars]  # all the variable data (e.g. model data)
-names(data)                          # show the variable names
-
-## Define structural, envt and sc predictor sets as three seperate data frames, X1, X2, X3 (for reference)
-X1<-data2[names(data2) %in% structural]
-X2<-data2[names(data2) %in% envt]
-X3<-data2[names(data2) %in% sc]
-
-## Assign "pretty names", if desired...
+## assign "pretty names", if desired...
 names(X1)
 names(X1)<-c("PctGrid", "FAF", "Cap_Inadeq.", "UI_Cost")
 # names(X1)<-c("Imports", "Utilization", "Availability", "Inadequacy", "DSM")
 
 data2<-droplevels(data2)
+
+Xvars <- c(structural, envt, sc)      # predictor sets (X names)
+X <- data2[names(data2) %in% Xvars]   # predictor matrix (X data)
+# X <- as.matrix(X) # convert from data.frame to matrix
+
+## define response vector
+Yvar <- "RNS" # response variable (choose RNS, EIR, RNS, etc.)
+Y <- data2[[Yvar]] # response values (Y data)
+n <- length(Y)     # sample size
+
+ENS <- data2$ENS # Alternate variable for response vector Y
+RNS <- data2$RNS # Alternate variable for response vector Y
+EIR <- data2$EIR # Alternate variable for response vector Y
+
+
+## define grouping variables
+# IDvars<-c("Beneficiary","Date") # index vars (i,j)
+IDvars <- c("Beneficiary")        # condition on Beneficiary (i) only, not month (j)
+ID <- data2[names(data2) %in% IDvars]  # index values
+
+## combine predictor matrix, response vector and grouping vector
+vars <- c(Xvars,Yvar,IDvars)          # all the variable names
+data <- data2[names(data2) %in% vars] # all the variable data (e.g. model data)
+names(data)                           # show the variable names
+
 ###########################
 # look at the scatterplots
 ############################
@@ -86,11 +93,17 @@ scatterplot(X=X3, Y=Y, Xtransform=NULL, Ytransform="log") # unscaled predictors
 scatterplot(X=X3, Y=Y, Xtransform="scale", Ytransform="log") # scaled predictors
 scatterplot(X=X3, Y=Y, Xtransform="center", Ytransform="log") # centered predictors
 
+hist(X2$P_Anomaly_mm) # leptokertoctic? But fine to use as is.
+hist(X2$P_Act_mm)  # Strictly positive. But fine to use as is.
+
 #########################
 ## Choose a data transformation based on the scatterplots
 #########################
 # log-response, unscaled predictors
 logdat<-cbind(ID,log(Y),X)
+
+# log-response, unscaled predictors
+log.scale.dat<-cbind(ID,log(Y),scale(X))
 
 # log-response, scaled predictors
 scaledat<-cbind(ID,log(Y),scale(X))
@@ -114,10 +127,18 @@ cX<-as.data.frame(cbind(cX1,cX2,cX3))
 ## First fit a simple linear regression, for comparison with HLM
 ##################
 ## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
-bestLM<-bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
-GLMdiagnostics(bestLM)       # standard diagnostic tests
-AICbestlm<-extractAIC(bestLM)  # let simple lm be the null model. (AIC=290.93)
-summary(bestLM)
+## Naive Model: OLS with all predictors.
+log.scale.dat <- subset(log.scale.dat, select = -Beneficiary)
+
+lm0 <- lm(ENS ~ . , data=log.scale.dat) # fit to all the predictors.
+
+# lm0 <- lm(log(ENS) ~ CapAdequacy + TB_PAFM + UIsum.LRS + PctGrid + IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + Total_WWF, data = scaledat)
+
+# bestLM <- bestGLM(X=X, Y=log(Y)) # Elliot's function for model subset selection based on AIC for any genearlized linear model. Simple lm is a special case of GLM.
+
+# GLMdiagnostics(lm0)       # standard diagnostic tests
+AIClm0<-extractAIC(lm0)  # let simple lm be the null model. (AIC=290.93)
+summary(lm0)
 
 ## results of simple linear regression with all the predictors
 # periodic autocorrelation observed, though not above the critical threshold value.
@@ -152,19 +173,26 @@ summary(bestLM)
 # AIC: 279.42
 
 ## Visual inspection of fitted vs. observed response
-plot(bestLM$fitted.values, log(ENS))
+par(mfrow=c(1,1))
+plot(bestLM$fitted.values, log(ENS)) # log-space --> look at adjusted R^2 (goodness of fit) in log-space!
+plot(exp(bestLM$fitted.values), ENS) # back-transformed
 
 ##################
-## Next try a two-tier linear regression, for comparison with HLM
+## Next try a two-stage OLS, for comparison with HLM
 ##################
 ## WARNING: LM & GLM ARE NOT APPROPRIATE FOR NESTED DATA DUE TO NON-INDEPENDENCE OF OBSERVATIONS WITHIN GROUPS --> Violation of iid.
-lm1 <- bestGLM(X=X1, Y=log(Y))
-GLMdiagnostics(lm1)       # standard diagnostic tests
+ols1.1 <- lm(ENS ~ CapAdequacy + TB_PAFM + UIsum.LRS + PctGrid , data=log.scale.dat) # fit to all the predictors.
+
+ols1.2 <- lm(lm1.1$residuals ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + Total_WWF, data=log.scale.dat) # fit to all the predictors.
+
+summary(ols1.1)
+summary(ols1.2)
+# GLMdiagnostics(lm1.1)       # standard diagnostic tests
+# GLMdiagnostics(lm1.2)       # standard diagnostic tests
 
 ## Visual inspection of fitted vs. observed response
 plot(lm1$fitted.values, log(ENS))
 
-summary(lm1)
 # autocorrelation up to lag 3 above the critical threshold.
 # Distribution of residuals look good.
 
@@ -204,7 +232,42 @@ summary(lm2)
 # Number of Fisher Scoring iterations: 2
 
 ## Visual inspection of fitted vs. observed response
+par(mfrow=c(1,1))
 plot(lm2$fitted.values, log(ENS))
+
+##################
+## Now try a two-tier GLS with augmented covariance matrix
+##################
+# log-response, unscaled predictors
+log.scale.dat<-cbind(ID,log(Y),scale(X))
+
+gls1.1 <- gls(model = ENS ~ CapAdequacy + TB_PAFM + UIsum.LRS + PctGrid ,
+            data=log.scale.dat,
+            correlation = corAR1(form = ~1 | Beneficiary),
+            method = "ML") # fit to L1 predictors.
+
+resids <- as.numeric(gls1.1$residuals)
+
+gls1.2 <- gls(model = resids ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + Total_WWF,
+              data=log.scale.dat,
+              correlation = corAR1(form = ~1 | Beneficiary),
+              method = "ML") # fit to remaining predictors.
+
+# naive <- lm(formula = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
+#             data = scaledat)
+#
+# gls1 <- gls(model = ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid,
+#            data = scaledat,
+#            correlation = corAR1(form = ~1 | Beneficiary),
+#            method = "ML")
+
+anova(lm0, gls1.1, ols1.1)
+anova(gls1.2, ols1.2)
+
+plot(gls1)  # standard diagnostic tests
+AICbestGLS <- extractAIC(gls1)  # let simple lm be the null model. (AIC=290.93)
+summary(gls1)
+
 
 #####################
 # Fit a mixed-effects model with random intercepts and fixed slopes --> USE THIS
@@ -214,12 +277,12 @@ plot(lm2$fitted.values, log(ENS))
 # Use Maximum Likelihood (method="ML") instead of REML to compare models with different fixed effects (e.g. different predictor sets).
 
 ## Model ENS ~ fn(Structural constraints only)
-nullmod<-lme(ENS ~ CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
+nullmod <- lme(ENS ~ CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
 summary(nullmod)
 # HLMdiagnostics(nullmod)        # modify GLMdiagnostics() for HLM...
 
 ## Alternate model: add climate and supply chain constraints... do AIC/BIC improve?
-altmod<-lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
+altmod <- lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage + CapAdequacy + UIsum.LRS + TB_PAFM + PctGrid, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
 summary(altmod)
 
 # Does the model improve significantly with the addition of envt + sc variables?  --> YES.
@@ -232,21 +295,21 @@ anova(nullmod,altmod)
 # Note: log-likelood test is the same for un-scaled, scaled or centered predictors!
 
 # Model ENS ~ fn(environmental + supply-chain constraints only)
-bestmod<-lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
+bestmod <- lme(ENS ~ IB_MAXTEMP + P_Anomaly_mm + P_Act_mm + HotDry + Total_WWF + Coal_Stock_Days + gas_eff_FAF + Hydro_eff_Storage, random = ~ 1 | Beneficiary, data=scaledat, method="ML")
 summary(bestmod)
 
 # Are structural variables even necessary? --> NO.
 # Log-likelihood ratio test: ENS~fn(structural + envt + sc) vs ENS~fn(envt + sc)
 # Log-likelihood ratio test should be used for nested models only, e.g. when one model is a subset of the other.
-anova(altmod,bestmod)
-
-#       Model df   AIC       BIC       logLik    Test    L.Ratio   p-value
-# altmod    1 15   276.7309  316.5403 -123.3654
-# bestmod   2 11   277.5254  306.7190 -127.7627  1 vs 2  8.794546  0.0664
-# Interpretation: simpler model (structural vars removed) is not significantly different than more complex model at the 95% CI.
+anova(nullmod, altmod,bestmod)
+#         Model df      AIC      BIC    logLik   Test  L.Ratio p-value
+# nullmod     1  7 320.8683 339.4460 -153.4341
+# altmod      2 15 274.3822 314.1916 -122.1911 1 vs 2 62.48606  <.0001
+# bestmod     3 11 277.5254 306.7190 -127.7627 2 vs 3 11.14320   0.025
+# Interpretation: simpler model (structural vars removed) **is** significantly different than more complex model at the 95% CI.
 
 # compare AIC across models
-bestlm.AIC<-extractAIC(bestLM)[2]  # OLS with structural + climate + sc
+bestlm.AIC <- extractAIC(bestLM)[2]  # OLS with structural + climate + sc
 lm1.AIC<-extractAIC(lm1)[2]        # OLS w. structural only
 lm2.AIC<-extractAIC(lm2)[2]        # Second-tier OLS w. climate + sc variables regressed on the residuals of lm1.
 

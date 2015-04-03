@@ -1,5 +1,5 @@
-###### MONTHLY SCHEDULE-DRAWAL FROM CGS BY SOURCE (PP) 
-setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/Rcommands")
+###### MONTHLY SCHEDULE-DRAWAL FROM CGS BY SOURCE (PP)
+setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/data")
 
 library(xlsx)
 library(plyr)
@@ -10,28 +10,28 @@ library(scales)
 #####
 Delhi.WWFES=read.xlsx(file="/Users/elliotcohen/Dropbox/data/Electricity/CEA/Delhi Energy and Water Footprint 2009-10.xlsx",sheetName="R",as.data.frame=TRUE,header=TRUE, check.names=TRUE)
 
-df<-Delhi.WWFES  # shorthand
-# df$names<-paste(df$Sector,df$Energy.Carrier, sep=" ")
-df<-ddply(df, .(Fuel.Type), numcolwise(sum)) # sum like-groups
-df<-df[order(df$WWFES.ML, decreasing=TRUE), ]  # order by Energy.Carrier
-
-
-par(mar=c(0,0,4,0) + 0.1)
-pie(df$WWFES.Lpd, labels=round(df$WWFES.Lpd, digits=1), col=as.numeric(df$Fuel.Type), main="Water Withdrawal Footprint of Energy Supply to Delhi\nFuelwise Liters/person/day", cex.main=1.5)
-legend("topleft",legend=df$Fuel.Type, fill=as.numeric(df$Fuel.Type))
-
-
-
-angle=c(rep(15,4), rep(30,6), rep(45,1),rep(60,3),rep(75,3))
-density=c(rep(15,4), rep(30,6), rep(45,1),rep(60,3),rep(75,3))
-
-
-angle=90
-density=as.numeric(df$Sector)*20
-pie(df$WWFES.Lpd, angle=angle,density=density, col=df$Energy.Carrier, labels=df$Energy.Carrier)
-legend("topleft",legend=levels(df$Sector), angle=angle, density=density)
-
-legend("bottomleft",legend=levels(df$Energy,Carrier), col=Energy.Carrier, angle=angle, density=density)
+# df<-Delhi.WWFES  # shorthand
+# # df$names<-paste(df$Sector,df$Energy.Carrier, sep=" ")
+# df<-ddply(df, .(Fuel.Type), numcolwise(sum)) # sum like-groups
+# df<-df[order(df$WWFES.ML, decreasing=TRUE), ]  # order by Energy.Carrier
+#
+#
+# par(mar=c(0,0,4,0) + 0.1)
+# pie(df$WWFES.Lpd, labels=round(df$WWFES.Lpd, digits=1), col=as.numeric(df$Fuel.Type), main="Water Withdrawal Footprint of Energy Supply to Delhi\nFuelwise Liters/person/day", cex.main=1.5)
+# legend("topleft", legend=df$Fuel.Type, fill=as.numeric(df$Fuel.Type))
+#
+#
+#
+# angle=c(rep(15,4), rep(30,6), rep(45,1),rep(60,3),rep(75,3))
+# density=c(rep(15,4), rep(30,6), rep(45,1),rep(60,3),rep(75,3))
+#
+#
+# angle=90
+# density=as.numeric(df$Sector)*20
+# pie(df$WWFES.Lpd, angle=angle,density=density, col=df$Energy.Carrier, labels=df$Energy.Carrier)
+# legend("topleft",legend=levels(df$Sector), angle=angle, density=density)
+#
+# legend("bottomleft",legend=levels(df$Energy,Carrier), col=Energy.Carrier, angle=angle, density=density)
 
 
 
@@ -42,7 +42,7 @@ legend("bottomleft",legend=levels(df$Energy,Carrier), col=Energy.Carrier, angle=
 CGS=read.xlsx(file="/Users/elliotcohen/Dropbox/data/Electricity/CEA/Delhi_schedule_drawal_from_CGS_at_Ex-Bus.xlsx",sheetIndex=1,as.data.frame=TRUE,header=TRUE)
 
 #convert any NA's to zeros
-CGS[,][is.na(CGS[,])]<-0 
+CGS[,][is.na(CGS[,])]<-0
 
 #create POSIXct time series
 # Day is arbitrary b/c data is monthly
@@ -57,9 +57,9 @@ CGS<-ddply(CGS,.(POSIXct,Date,year,month_id,stn_code,seb_code), summarize,t_ener
 # ## plot CGS allocatsion to Delhi
 # CGSplot<-ggplot(CGS,aes(x=POSIXct,y=t_energy_month, colour=stn_code)) + geom_line()
 # CGSplot + scale_y_continuous(name='Monthly CGS Allocations to Delhi (LU)') + scale_x_datetime(breaks=date_breaks("3 months"))
-# 
+#
 # ## Good, but too busy.... Now try facet_wrap
-# ## USEFUL FOR VISUAL INPSECTION OF PLANT-LEVEL DATA... 
+# ## USEFUL FOR VISUAL INPSECTION OF PLANT-LEVEL DATA...
 # CGSplot + facet_wrap(~stn_code, scale="free")
 
 # Better, but CGS plot is still too busy... let's filter out PPs below a certain threshold of annual allocation to Delhi
@@ -72,18 +72,18 @@ range(yr$POSIXct)  # Check to see if we have the right months
 
 ## combine multiple generating units at the same location (stn_code coerced to match in Excel)
 ## already completed above.
-yr<-ddply(yr,.(month_id,year,stn_code,seb_code,POSIXct,Date), summarize,t_energy_month=sum(t_energy_month)) 
+yr<-ddply(yr,.(month_id,year,stn_code,seb_code,POSIXct,Date), summarize,t_energy_month=sum(t_energy_month))
 
 ## double check to see if we have the right months --> YES.
-levels(as.factor(yr$POSIXct)) 
+levels(as.factor(yr$POSIXct))
 
 ## sum monthly energy allocations from CGS to Delhi over the year (April 1 2011 - March 31 2012)
 zz<-ddply(yr, .(stn_code),summarize, sum=sum(t_energy_month))
 zz  #cumulative energy allocations to Delhi from CGS in 2011-12.
 ## THESE MATCH PRINTOUT FROM NRPC! UNITS = LU = 10^5 KWH = 0.1 GWH
 
-## keep CGS with non-zero contributions to Delhi (>0 LU/yr) 
-keep<-subset(zz,sum>0) 
+## keep CGS with non-zero contributions to Delhi (>0 LU/yr)
+keep<-subset(zz,sum>0)
 keep.names<-keep$stn_code
 dim(keep)[1]  #26 CGS with non-zero energy allocations to Delhi in 2011-2012
 # NOTE: this is after combining multiple units at the same location:
@@ -115,7 +115,7 @@ identical(dim(keep.data)[1]+dim(drop.data)[1], dim(yr)[1])
 CGSmeta<-read.xlsx(file="/Users/elliotcohen/Dropbox/data/Electricity/CEA/Data/CGS-Allocations-NR-REVISED-8-23-13.xlsx",sheetIndex=2,colIndex=c(1:25),rowIndex=c(1:33),as.data.frame=TRUE,header=TRUE)
 
 #convert any NA's to zeros for columns that are numeric
-CGSmeta[,12:25][is.na(CGSmeta[,12:25])]<-0 
+CGSmeta[,12:25][is.na(CGSmeta[,12:25])]<-0
 
 #compare stn_code btw CGSmeta and keep.data
 levels(CGSmeta$stn_code)
@@ -197,7 +197,7 @@ min<-merge1
 mean<-merge1
 max<-merge1
 
-# Add min WWIF attribute 
+# Add min WWIF attribute
 min$stat<-as.factor("min")
 n=dim(min)[1]
 for (i in 1:n){
@@ -233,7 +233,7 @@ min<-merge2
 mean<-merge2
 max<-merge2
 
-# Add min WCIF attribute 
+# Add min WCIF attribute
 min$stat<-as.factor("min")
 n=dim(min)[1]
 for (i in 1:n){
@@ -280,7 +280,7 @@ title<-"Trans-Boundary Water Footprint\nof Energy Supplied From Grid to Delhi, D
 B<-ggplot(merge,aes(x=Date,y=WF,colour=metric,linetype=stat)) + geom_line()
 B + facet_wrap(~stn_code, scale="free_y", nrow=4) + scale_x_date(labels = date_format("%b")) + labs(title=title) + scale_y_continuous(name="Million Liters Freshwater per Month")
 
-## now show mean withdrawals only 
+## now show mean withdrawals only
 W<-ggplot(Withdrawals,aes(x=Date,y=WF,colour=Fuel,linetype=stat)) + geom_line()
 
 TotalTBWF<-ddply(merge, .(year,month_id,POSIXct,Date,metric,stat),summarize,WF=sum(WF))
@@ -292,7 +292,7 @@ TotalTBWF$Scale<-"Trans-boundary"
 ###########################################
 # Delhi_OwnGen.R
 ##########################################
-setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/Rcommands")
+setwd("/Users/elliotcohen/Dropbox/data/Electricity/CEA/data")
 
 library(xlsx)
 library(plyr)
@@ -300,10 +300,11 @@ library(reshape2)
 library(ggplot2)
 library(scales)
 
+load("OwnGen.rsav")
 OwnGen=read.xlsx(file="/Users/elliotcohen/Google Drive/Data/Electricity/SLDC/Delhi_Own_Gen_by_PP_Monthly_2011-2012.xlsx",sheetIndex=1,as.data.frame=TRUE,header=TRUE)
 
 #convert any NA's to zeros
-OwnGen[,][is.na(OwnGen[,])]<-0 
+OwnGen[,][is.na(OwnGen[,])]<-0
 
 #create POSIXct time series
 # Day is arbitrary b/c data is monthly
@@ -422,7 +423,7 @@ min<-OwnGen2
 mean<-OwnGen2
 max<-OwnGen2
 
-# Add min WCIF attribute 
+# Add min WCIF attribute
 min$stat<-as.factor("min")
 n=dim(min)[1]
 for (i in 1:n){
@@ -492,7 +493,7 @@ p<-ggplot(TotalWF, aes(x=Date,y=WF,linetype=stat,colour=metric)) + geom_line() +
 mean<-subset(TotalWF,stat=="mean")
 
 # Show IB and TB seperately
-p<-ggplot(mean, aes(x=Date,y=WF/10^3,colour=metric, linetype=Scale)) + geom_line() 
+p<-ggplot(mean, aes(x=Date,y=WF/10^3,colour=metric, linetype=Scale)) + geom_line()
 
 p + scale_x_date(labels = date_format("%b")) + labs(title="Total Water Footprint of Delhi's Electricity Supply\n[mean estimates only; note change in y-scale]") + scale_y_continuous(name="BL freshwater per month", breaks=c(10,20,30,40,50,60)) + facet_wrap(~Scale, scale="free") + theme_classic()
 
@@ -507,10 +508,10 @@ ddply(TotalWF, .(metric,stat), numcolwise(sum))
 # Show combined (IB+TB)
 # Total WF (Showing min, mean and max combined estiamtes (IB+TB)
 SumWF<-ddply(TotalWF, .(year,month_id,POSIXct,Date,metric,stat),summarize,WF=sum(WF))
-p2<-ggplot(SumWF, aes(x=Date,y=WF,linetype=stat,colour=metric)) + geom_line() + facet_wrap(~metric) + scale_x_date(labels = date_format("%b"), breaks="2 month", name="Month") + scale_y_continuous(name=ylab2); p2    
+p2<-ggplot(SumWF, aes(x=Date,y=WF,linetype=stat,colour=metric)) + geom_line() + facet_wrap(~metric) + scale_x_date(labels = date_format("%b"), breaks="2 month", name="Month") + scale_y_continuous(name=ylab2); p2
 
 SumWFmean<-subset(SumWF, stat=="mean")
-SumWFmeanp<-ggplot(SumWFmean,aes(x=Date,y=WF/10^3,colour=metric)) + geom_line() 
+SumWFmeanp<-ggplot(SumWFmean,aes(x=Date,y=WF/10^3,colour=metric)) + geom_line()
 
 p3<-SumWFmeanp + scale_x_date(labels = date_format("%b"), breaks="2 month", name="Month") + labs(title="Total water footprint of Delhi's electricity supply") + scale_y_continuous(name=ylab2); p3
 
@@ -525,7 +526,7 @@ ddply(SumWFmean, .(metric,stat), summarize, WF.Annual=sum(WF))
 muniW<-850*3.78 # MLD produced (withdrawals slightly higher)
 pop<-16753235/10^6 # million people
 muniWpc<-muniW/pop #liters per person per day (production ~ withdrawals)
-muniCpc<-50*3.78 #liters "consumed: per person per day 
+muniCpc<-50*3.78 #liters "consumed: per person per day
 muni<-rep(96.390,12) #Delhi Municipal Supply according to 850MGD figure reported in 2012 Delhi Statistical Handbook
 muni<-as.data.frame(muni)
 muni$units<-rep("BL",12)
@@ -539,7 +540,7 @@ SumWFmeanp + geom_line(aes(x=muni$Date,y=muni$muni,colour=muni$metric))
 SumWF$percap<-SumWF$WF/pop #Million liters divided by million people = liters per person
 
 Sumpercap<-ggplot(SumWF,aes(x=Date,y=percap/30,colour=metric,linetype=stat)) + geom_line() + facet_wrap(~metric, scale="free"); Sumpercap
-# End Delhi_OwnGen.R 
+# End Delhi_OwnGen.R
 
 ## Plots
 ##
@@ -561,25 +562,25 @@ IBoundWF<-ggplot(OwnGen,aes(x=Date,y=WF,colour=metric,linetype=stat)) + geom_lin
 
 # # Units: Billion Liters Water (BLw)
 # WF.mean<-subset(OwnGen, stat=="mean")
-# WF.meanp<-ggplot(WF.mean,aes(x=Date,y=WF/10^3,group=metric,linetype=metric, colour=Fuel)) + geom_line() 
-# 
+# WF.meanp<-ggplot(WF.mean,aes(x=Date,y=WF/10^3,group=metric,linetype=metric, colour=Fuel)) + geom_line()
+#
 # OwnGenWFp<-WF.meanp + facet_wrap(~stn_code) + scale_x_date(labels = date_format("%b"),name="Month") + labs(title="Water withdrawal and consumption\nassociated with Delhi's in-boundary electricity production") + scale_y_continuous(name="Billion liters water per month")
 # OwnGenWFp
-# 
+#
 # # Plot Withdrawals - min, mean and max estimates.
 # # Units: Million Liters Water (MLw)
 # Withdrawals<-subset(OwnGen, metric=="Withdrawals")
 # p<-ggplot(Withdrawals,aes(x=Date,y=WF,colour=Fuel,linetype=stat)) + geom_line()
 # InBoundWWF<-p + facet_wrap(~stn_code, scale="fixed") + scale_x_date(labels = date_format("%b")) + labs(title="In-Boundary Water Withdrawal Footprint\nof Delhi's Own Generation, Disaggregated By Source") + scale_y_continuous(name="Million Liters Freshwater")
 # InBoundWWF
-# 
+#
 # # Repeat for Consumption
 # # Units: Million Liters Water (MLw)
 # Consumption<-subset(OwnGen, metric=="Consumption")
 # p<-ggplot(Consumption,aes(x=Date,y=WF,colour=Fuel,linetype=stat)) + geom_line()
 # InBoundWCF<-p + facet_wrap(~stn_code, scale="fixed") + scale_x_date(labels = date_format("%b")) + labs(title="In-Boundary Water Consumption Footprint\nof Delhi's Own Generation, Disaggregated By Source") + scale_y_continuous(name="Million Liters Freshwater")
 # InBoundWCF
-# 
+#
 # ## Now plot both withdrawals and consumption...
 # # Units: BIllion Liters Water (BLw)
 # OwnGenWF<-ggplot(OwnGen,aes(x=Date,y=WF/10^3,colour=Fuel,linetype=stat)) + geom_line() + facet_wrap(~stn_code + metric) + scale_x_date(labels = date_format("%b")) + labs(title="Water Withdrawal and Consumption Requirements\nof Power Plants Located In Delhi") + scale_y_continuous(name="Billion liters water per month")
