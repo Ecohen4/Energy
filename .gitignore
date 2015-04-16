@@ -58,3 +58,8 @@ Thumbs.db
 ### Miscellaneous ###
 *.rdb
 *.rdx
+
+# figures #
+###########
+.png
+.pdf

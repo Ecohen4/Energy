@@ -1,0 +1,38 @@
+PVT IPP SECTOR
+ 32,BARODA CCPP,160 GUJARAT,73.80,0.77,0.47,0.53,0.00,0.00,1.69
+ 33,ESSAR CCPP,515 GUJARAT,88.55,2.47,1.49,1.22,0.00,0.09,0.00 Allocation for gas is for 300 MW
+,capacity.
+ 34,PEGUTHAN CCPP,655 GUJARAT,308.99,3.14,2.12,2.07,0.00,0.00,0.00
+ 35,SUGEN CCPP,1147.5 GUJARAT,728.15,5.51,4.65,4.40,0.00,0.00,0.00
+,Sub Total (WR),2477.5,1199.49,11.89,8.73,8.22,0.00,0.09,1.69
+ 36,GAUTAMI CCPP,464 ANDHRA PRADESH,317.35,2.23,1.80,2.00,0.00,0.00,0.00
+ 37,GODAVARI CCPP,208 ANDHRA PRADESH,140.65,1.00,0.98,0.98,0.00,0.00,0.00
+ 38,JEGURUPADU CCPP,455.4 ANDHRA PRADESH,278.84,2.19,2.09,1.89,0.00,0.00,3.93
+ 39,KONASEEMA CCPP,445 ANDHRA PRADESH,237.04,2.14,1.75,1.75,0.00,0.00,0.00
+ 40,KONDAPALLI EXTN CCPP,366 ANDHRA PRADESH,180.12,1.76,1.63,1.36,0.00,0.00,0.00
+ 41,.
+,KONDAPALLI CCPP,350 ANDHRA PRADESH,207.67,1.68,1.75,1.42,0.00,0.00,47.15
+ 42,PEDDAPURAM CCPP,220 ANDHRA PRADESH,133.06,1.06,0.95,0.95,0.00,2.00,0.00
+ 43,VEMAGIRI CCPP,370 ANDHRA PRADESH,261.67,1.78,1.59,1.59,0.00,0.00,0.00
+ 44,KARUPPUR CCPP,119.8 TAMIL NADU,78.87,0.58,0.48,0.53,0.00,0.00,0.00
+ 45,P.NALLUR CCPP,330.5 TAMIL NADU,112.73,1.59,0.54,0.54,5756.76,2.00,0.00
+ 46,VALANTARVY CCPP,52.8 TAMIL NADU,32.07,0.25,0.27,0.26,0.00,0.00,0.79
+,Sub Total (SR),3381.5,1980.07,16.26,13.83,13.27,5756.76,4.00,51.87
+ 47,DLF ASSAM GT,24.5 ASSAM,5.01,0.12,0.17,0.08,0.00,0.00,8.72
+,Sub Total (NER),24.5,5.01,0.12,0.17,0.08,0.00,0.00,8.72
+,Total (PVT IPP S),5883.5,3184.57,28.27,22.73,21.57,5756.76,4.09,62.28
+,GRAND TOTAL,16088.27,7903.10,78.61,61.92,55.70,8402.95,2177.56,368.91
+ Installed Capacity is as on last day of the month
+* Normative gas requirement at 90 % PLF taking GCV of gas=9000k.Cal/SCM (except for Ramgarh CCGT for which GCV is 4150 kCal/SCM),station
+,heat rate - 2900 k.Cal/kWh for open cycle and 2000 k.Cal/kWh for combined cycle.
++ Including R-LNG
+$ Baramura GT Ext. UnitV (21MW) commissioned on 3.8.2010
+Note: (1) Barge mounted 220 MW CCPP (Tanir Bavi) of GMR Energy Ltd.under the category of liquid fuel based power stations has since been shifted to Kakinada,East Godavari Distt,Andhra Pradesh form Mangalore 
+,Karnataka and recommissioned on Natural Gas as primary fuel in the month of Aug 2010. (2) Gas from RIL (KG D-6) has been allocated to this plant. (3) The plant has thus
+,become gas based CCPP. This station shall be included in the list of gas based GT station once the changes are made in CEA records by DMLF Div.
+
+MUs,-,Million Units,KL,-,Kilo Litre
+MMSCMD - Million Standard Cubic Metres
+
+HSD,-,High Speed Diesel
+
