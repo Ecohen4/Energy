@@ -476,7 +476,6 @@ Broadly speaking, economic activity (as measured by GDP) drives annual average e
 
 The three most common classes of energy forecast models are regression, time-series and econometric.
 
-Regression, Time-Series
 #### Climate Perspective in Energy Demand Forecasts
 Daily and seasonal variability in urban electricity demand is caused, to a large degree, by demand for cooling and heating, which is of course driven by meteorological factors (Segal et al.,1992; Thatcher, 2007).
 
@@ -604,17 +603,17 @@ In other words, CDH and HDH represent the number of degrees per year that requir
 
 ### Temperature-Load Curve (TLC) & Threshold Temperature (Tt)
 
-Starting with the high-resolution hourly temperature and load data collected, and making them correspond by date/time of observation, the temperature-load profile of every city-year combination can be obtained. Testing and iterations has showed that to obtain a solid profile suitable for a regression fit, city-year data needed to be for at least the equivalent to 3 month of observations to catch the seasonal trend. Therefore all the collected data were filtered to this criteria and a small number of city-year combinations were lost as a consequence.  
+Starting with the pairwise observations of hourly temperature and energy demand (MW) the temperature-load profile of every city-year combination can be obtained. Iterative testing has shown that to obtain a solid profile suitable for a regression fit, temperature-load data must be available for at least the equivalent of 3 months to capture a wide range of temperatures. Therefore, all the collected data were filtered to this criteria and a small number of city-year combinations were omitted as a consequence.  
 
-Economic activity is typically lower on weekends compared to weekdays, and electricity demand is commensurately lower. To avoid this noise in the analyses, corresponding observations are omitted.
+Economic activity is typically lower on weekends compared to weekdays, and electricity demand is commensurately lower. To remove this noise, which is unrelated to temperature, weekends were omitted. 
 
-Plotting the load against the temperature gives the Temperature-Load Curve (TLC). Depending on the climate of the cities considered, this profile can either have a "V" shape, a linear shape or a "cloud" shape. To illustrate this, we consider the TLC for New York City and Dakar in 2012.
+Plotting the energy demand against temperature gives the Temperature-Load Curve (TLC). Depending on the climate and prevalence of heating and cooling appliances, the strength of the temperature-load profile will vary. Cities with distinct heating and cooling seasons (such as New York City, latitude = 40.65 Degrees, figure XX) will have a V shaped TLC. The right side of the curve represents the cooling regime: as temperatures increase, demand for electricity increases because of cooling requirements. The cooling regime, and therefore the city's sensitivity to high temperatures is characterized by a positive coefficient called the cooling coefficient. The left side of the curve represents the heating regime: as temperatures increase, demand for electricity increases because of heating requirements (although in NYC the main heating requirements are met by natural gas/heating oil and not electricity, some heating applicances do use electricity). The city's sensitivity for cold temperatures is characterized by a negative coefficient called the Heating Coefficient, which tends to be lower in absolute terms than the Cooling Coefficient for the reason stated above. The temperature that separates the cooling and the heating regime is called the Threshold Temperature. It is the transition between heating and cooling regimes. In other words, it is the observed 'comfortable' temperature above which perople start cooling and under which people start heating. 
 
-The below leftward figure is a clear "V" shape temperature-load profile for New York City, 2012. The right side of the curve represents the cooling regime: as temperatures increase, demand for electricity increases because of cooling requirements. The cooling regime, and therefore the city's sensitivity to high temperatures is characterized by a positive coefficient called the cooling coefficient. The left side of the curve represents the heating regime: as temperatures increase, demand for electricity increases because of heating requirements (although the main heating requirements are met by natural gas and not electricity, some heating applicances do use electricity). The city's sensitivity for cold temperatures is characterized by a negative coefficient called the Heating Coefficient, which tends to be lower in absolute terms than the Cooling Coefficient. The temperature that separates the cooling and the heating regime is called the Threshold Temperature. It is the temperature above which the direction of change of electricity demand changes. In other words, it is the observed 'comfortable' temperature above which perople start cooling and under which people start heating. 
+By contrast, cities in the tropics and sub-tropics tend to have cooling but no significant heating. For example, Dakar Senegal (latitude = 14.7 Degrees) has a distinct cooling seasons as can be seen from the TLC (figure XX). 
 
-In contrast, the below rightward figure has a clear linear shape TLC for Dakar, 2012. This shape indicates that the city is in the cooling regime only as temperatures are on average very high. A "cloud" shape TLC would be similar to Dakar's TLC, but whithout apparent and significant relation between load and temperature (this would typically be represented by a near horizontal 'cloud' distribution of datapoints on the TLC). It must be noted the concept of threshold temperature doesn't apply for a city that doesn't have both cooling and heating regime. Therefore there is no threshold temperature for linear and cloud TLC cities. 
+A third category is cities located in temperate climates with little to no cooling and heating infrastructure and thus no strong relationship between temperature and load. The TLC for these cities will lack a definite Threshold Temperature and the slope of the regression will not be significantly different than zero. As we will see in the result section, several cities have very recently transitionned from non-significant to significant Heating & Cooling, which indicates increased penetration of thermal-comfort appliances (see figures XX). 
 
-```{r,fig.width=10, fig.height=5,echo=FALSE}
+```{r,fig.width=10, fig.height=5,echo=FALSE, eval=FALSE}
 nyc <- hourly[which(hourly$city=="New York City" & hourly$yr==2012),]
 dakar <- hourly[which(hourly$city=="Dakar" & hourly$yr==2012),]
 p1 <- ggplot()+
@@ -627,13 +626,13 @@ print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 ```
 
-The above correlation, made for abservations at all hours of the day, is then subsetted for further analysis at 1) daily peak load and 2) at every hour of the day; leading to 2 different datasets on which analyses will be performed. The next section details these. 
 
 ### Cooling/Heating Power Demand 
 
-This section aims at quantifying the relation between load and temperature. Starting with the daily peak load dataset, and for every city-year combination, a linear regression model is applied to the profiles that have a linear or cloud TLC shape, and a segmented model for the profiles that have the V shape. Since a very large amount of city-year combinations are considered in this study, R functions have been developped and used to automate this process as visual inspection would be inrealistic and time-consuming. Thus, for every city-year combination, the first step of the algorithm is to compile the difference between the 75th percentile and the 25th percentile of the temperature distribution. In the subsequent parts, we shall refer to this difference as the *metric*. From testing and iterations, it appeared that a V shape city would always have this differential metric higher than 6.8, and that a linear or cloud city would always have it lower than 6.8 **Should I show a graph that illustrates this point?**. Therefore, for every city-year combination, the algorithm fits a linear model (lm() R function) for the combination with a metric lower than 6.8, and fits both a linear and segmented model (lm() and segmented() R functions) for the combination with a metric higher than 6.8. It must be noted that the segmented() R function requires as input a 1st estimate of the break-point. For automation purposes, this 1st estimate was set as the average of the temperature distribution. 
+This section aims to quantify the TLC for a set of global cities. Cities are divided in two groups: Heating *&* Cooling, and Heating *or* Cooling. For cities for heating or cooling only, a sample linear regression is used to model load as a function of temperature. For cities with heating and cooling, a segmented linear regression is performed where in two linear models (one for cooling, one for heating) are iteratively estimated to minimize the total sum of square root errors. The intercept (Beta0) and Beta coefficients (Beta1) for the two linear models are estimated simultaniously by ordinary least squares given an initial condition of the breakpoint between the two linear regressions. In physical terms, the breakpoint is the threshold temperature (or transition temperature) between heating and cooling seasons. For each city, the initial condition was set equal to the mean temperature observed in that city. 
+Since a large number of city-year combinations are considered in this study, we developed R functions to automate the process. For every city-year combination, the first step of the algorithm is to compute the IQR (difference between the 75th percentile and the 25th percentile) of the temperature distribution. Empirically, we found that for cities with distinct heating and cooling seasons the IQR was higher than 6.8 and that cities with heating or cooling have a temperature IQR less than 6.8. 
 
-The below leftward fitting shows the segmented fitting for New York City and the below rightward figure shows the linear fitting for Dakar. The coefficients (Heating and/or Cooling), their significance and the x-coordinnate of the break-point are extracted and saved for every city at every year. The x-coordinnate of the break-point is simply the threshold temperature. 
+Figure XX (below) shows the resulting linear regression fit for NYC and Dakar respectively. The coefficients (Heating and/or Cooling), their significance and the x-coordinnate of the break-point (threshold temperature) are extracted and saved for every city at every year. This is done for all cities at daily peak load observations. 
 
 ```{r,echo=FALSE, fig.width=10, fig.height=5, message=FALSE, warning=FALSE}
 dakar <- ddply(dakar, .(city,yr,m,d), function(x) x[x$mw == max(x$mw),])
@@ -643,16 +642,16 @@ linear.nyc <- lm(mw~temperature,data=nyc)
 segmented.nyc <- segmented(linear.nyc, seg.Z=~temperature, psi=list(temperature=20), control=seg.control(display=FALSE))
 
 par(mfrow=c(1,2))
-t <- plot(nyc$temperature,nyc$mw, main="Segmented regression for NYC", xlab="Temperature (DegC)", ylab="Demand (MW)")+plot(segmented.nyc,add=TRUE,res=FALSE,link=TRUE,col="green",size=0.9)
+t <- plot(nyc$temperature,nyc$mw, main="Segmented regression for NYC", xlab="Temperature (DegC)", ylab="Peak Demand (MW)")+plot(segmented.nyc,add=TRUE,res=FALSE,link=TRUE,col="green",size=0.9)
 
-q <- plot(dakar$temperature,dakar$mw, main="Linear regression for Dakar", xlab="Temperature (DegC)", ylab="Demand(MW)") + abline(linear.dakar,col="green")
+q <- plot(dakar$temperature,dakar$mw, main="Linear regression for Dakar", xlab="Temperature (DegC)", ylab="Peak Demand(MW)") + abline(linear.dakar,col="green")
 
 # pushViewport(viewport(layout = grid.layout(1, 2)))
 # print(t, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 # print(q, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 ```
 
-The above being done for the daily peak load dataset, the same procedure is repeated for the 2nd dataset containing subsets at every hour of the day. The coefficients (Heating and/or Cooling), their significance and the threshold temperature are extracted and saved for every city at every year and at every hour of the day (00hr to 23hr). The below figure illustrates this procedure: 
+This process is repeated for every hour of the day for each city-year combination, that is, fit a linear/segmented regression model to all the weekday/weekend midnight, 1ams, 2ams, etc. resulting in 24 TLCs for each city-year combination. This will be used in the next section to estimate integral energy consumption for heating and cooling. 
 
 ```{r,echo=FALSE,message=FALSE,warning=FALSE, fig.width=10, fig.height=10}
 nyc <- hourly[(hourly$city=="New York City" & hourly$yr==2012),]
@@ -676,11 +675,9 @@ for (i in 1:length(levels(hourly.plot$hr))){
 }
 ```
 
-The coefficients (heating and/or cooling) obtained for daily peak load and at every hour for every city-year combination are a measure for intensity of thermal-comfort seeking in the share of electricity demand. They are expressed in MW/DegC and therefore represent the incremental change in daily peak load (for the daily peak load analysis) and load (for the hourly analysis) for every 1DegC increase/decrease in temperatures. In subsequent sections, the Cooling Coefficient will be referred to as the Cooling Demand and the Heating Coefficient as the Heating Demand. 
+The coefficients (heating and/or cooling) obtained at every hour for every city-year combination are a measure of demand for thermal-comfort seeking, that is how much power is required to keep residents in city comfortable. Coefficients are expressed in MW/DegC and therefore represent the incremental change in load for every 1DegC change in threshold temperatures. In subsequent sections, the Cooling Coefficient will be referred to as the Cooling Demand and the Heating Coefficient as the Heating Demand. 
 
-The next section approximates the coooling and heating energy demanded in the historial load data collected. 
-
-### Cooling/Heating Energy Consumption
+### Integral Energy Consumption for Heating and Cooling
 
 In this section, an approximation of the thermal-comfort energy demanded is derived for the city-year combinations for which data was collected. This analysis requires a well defined time-scale of study due to the seasonality at the year level of the cooling (summer) and heating (winter). Thefore, the collected data was filtered to include only city-year combinations containing the equivalent of 350 days of hourly observations. 350 days was chosen instead of 365 days to allow a tolerance for negligible data loss (a maximum of 2 weeks of equivalent hourly observations). Once the data filtered, and using the *hourly* Cooling Demand, Heating Demand and threshold temperature for the resulting city-year combinations, the yearly energy consumed for thermal-comfort seeking is estimated as below: 
 
@@ -905,6 +902,9 @@ ggplot(normalized.melt, aes(x=city, y=value, fill=variable)) +
   scale_fill_manual(values=c("blue", "red", "gray"))
 
 ```
+
+
+**Result 5:** Include Nairobi for increased heating and Abidjan for increased Cooling
 
 
 ## Discussion and Implications for policy-makers
