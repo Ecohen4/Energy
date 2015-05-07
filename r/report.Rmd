@@ -573,12 +573,14 @@ Thatcher (2007) built a complex demand forecast model with over 50 model paramet
 
 All of these studies focus on detailed modeling for a particular mature utility and are therefore hard to generalize to other contexts. Our analysis draws upon consensus findings from the literature (e.g. electricity demand in urban areas is largely a function of temperature) to build our own streamlined urban electricity demand model. The purpose of our model is not precise prediction (we leave that to the electric utilities themselves), but rather a generalized framework that can be applied across multiple, data-sparse cities simultaneously with reasonable accuracy.
 
-#### Time Series and Econometric Models
+One notable example in this direction (besides our own attemp) is Wan et. al. (2011). Their study is similar in spirit to ours, but differs considerably in methodology. They estimate baseline and future heating and cooling demand for a generic air-conditioned office building in five Chinese cities representing five distinct climate zones. They apply a novel approach for extracting orthogonal (non-redundant) information from colinear meteorological data (dry bulb temperature, wet bulb temperature and solar radiation) via Principal Component Analysis, and then apply the first principal component in a regression framework to estimate heating and cooling loads. They compare results with a physical-based building energy model. <more on this.>
+
+#### Time-Series and Econometric Models
 Rallapalli and Ghosh (2012) apply a non-stationary time-series model to accurately predict energy demand in all 5 regional power grids of India. Their model out-performs official forecasts of the Central Electricity Authority of India for both in-sample and out-of-sample prediction.
 
 Jung (1993), Fillipini (1999), Tiwali (2000), Fillipini and Pachauri (2004) and World Bank (2008) apply econometric approaches to estimate the income elasticity of electricity demand in Korea, Switzerland, India, India and India, respectively.
 
-Many different econometric approaches are found in literature, and can be categorized into macro- and micro-level approaches. Macroeconomic approaches employ top-down, national/sub-national summary statistics (e.g. Bose and Shukla 1999; Chaturpuri et a. 2014), whereas microeconomic approaches use bottom-up household survey data to analyze across different heterogeneous sub-groups (e.g. Tiwari 2000; Pachauri 2004; The World Bank 2008).
+Econometric approaches can be catalogued into macro- and micro-level approaches. Macroeconomic approaches employ top-down, national/sub-national summary statistics (e.g. Bose and Shukla 1999; Chaturpuri et a. 2014), whereas microeconomic approaches use bottom-up household survey data to analyze across different heterogeneous sub-groups (e.g. Tiwari 2000; Pachauri 2004; The World Bank 2008).  
 
 #### Special Considerations in Tropical and Sub-Tropical Cities
 Pachauri and Spreng (2004) found that urban households in India change their energy consumption patterns with rising incomes. Households consume more energy per capita and move from less clean-burning energy sources such as biomass and kerosene to higher quality energy sources such as electricity and LPG. Both trends points towards higher peak electricity demand and higher integral energy consumption. 
