@@ -779,7 +779,6 @@ Since a large number of city-year combinations are considered in this study, we 
 Figure XX (below) shows the resulting linear regression fit for NYC and Dakar respectively. The coefficients (Heating and/or Cooling), their significance and the x-coordinate of the break-point (threshold temperature) are extracted and saved for every city at every year. This is done for all cities at daily peak load observations. 
 
 ```{r,echo=FALSE, fig.width=10, fig.height=5, message=FALSE, warning=FALSE}
-
 nyc <- hourly[which(hourly$city=="New York City" & hourly$yr==2012),]
 dakar <- hourly[which(hourly$city=="Dakar" & hourly$yr==2012),]
 
@@ -793,16 +792,6 @@ par(mfrow=c(1,2))
 t <- plot(nyc$temperature,nyc$mw, main="Segmented regression for NYC", xlab="Temperature (°C)", ylab="Peak Demand (MW)")+plot(segmented.nyc,add=TRUE,res=FALSE,link=TRUE,col="green",size=0.9)
 
 q <- plot(dakar$temperature,dakar$mw, main="Linear regression for Dakar", xlab="Temperature (°C)", ylab="Peak Demand(MW)") + abline(linear.dakar,col="green")
-
-# Now make this plot interactive and online. To do this, first instantiate a Plotly object:
-library(plotly)
-py <- plotly()
-
-# And call the ggplotly() method to convert your ggplot2 plot into a Plotly plot:
-r <- py$ggplotly(t)
-
-# Your online, interactive, collaborative plot lives at this URL:
-r$response$url
 
 # pushViewport(viewport(layout = grid.layout(1, 2)))
 # print(t, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
