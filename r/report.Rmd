@@ -437,7 +437,13 @@ To illustrate the potential for vast differences in energy demand for thermal co
 
 In addition to higher temperatures, the cooling season is also much longer: in the past year, Delhi had nearly **six** times as many cooling-degree days as New York City (again assuming a desired indoor air temperature of 72 °F). Compounded by (a) leaky building envelopes in developing world cities (designed for natural ventilation, not air conditioning), (b) intense heat-island effects (typically less green space), and (c) massive population growth -- peak electricity demand in emerging megacities could one day surpass that of their neighbors to the north -- not only in aggregate terms because of their population, but also *per-capita* due to climate, building design and thermodynamics. 
 
-Figure 1 provides a map of urbanization rates for cities worldwide with a population greater than 750,000 (UN 2011). Urbanization rates are clearly highest in South Asia and Sub-Saharan Africa. Figure 2 shows the *distribution* of population growth rates for the same set of cities, grouped by latitude (north, tropics and subtropics). The expected value (e.g. central tendancy) of urbanization rates in the tropics and subtropics is clearly distinct from that of the north. Cities in the tropics and subtropics represent a vast new market for energy services, including air conditioning, refrigeration, and consumer appliances.
+Already, heating, ventilation and air conditioning (HVAC) account for 35% of total primary energy requirements of the United States (Kwok and Rajkovich 2010). In China, buildings accounted for 24.1% of national energy consumption in 1996, 27.5% by 2001, and are projected to increase to 35% by 2020 (Wan et. al. 2011). Globally, buildings consume an estimated 40% of total primary energy (IEA 2015) or 5348 MTOE in 2012; equivalent in wattage to 50 billion human beings working at peak exertion. At the city-scale, HVAC play an even larger role in driving total final energy consumption and related GHG emissions (compared to national and global averages) due to higher population density, building density, heat-island effect, and tendency towards service-economy. 
+
+The incredible amount of energy consumed in buildings today will only continue to rise as global demand for indoor thermal comfort increases. At the root of the issue is one startling statistic from researchers in China: large commercial buildings with full A/C require 10-20 times more energy per-square foot compared to traditional residential buildings (Wan et. al. 2011, Xu et. al. 2013).
+
+<Electricity use in buildings alone accounted for a full 18% of global final energy consumption in 2004 (Pérez-Lombard et. at. 2008). Globally, electricity demand is destined to rise further as more developing economies transition from biomass, kerosene, coal and other point-of-use combustion sources to electriciy for heating, cooking and other indoor uses.>
+
+<Figure 1 provides a map of urbanization rates for cities worldwide with a population greater than 750,000 (UN 2011). Urbanization rates are clearly highest in South Asia and Sub-Saharan Africa. Figure 2 shows the *distribution* of population growth rates for the same set of cities, grouped by latitude (north, tropics and subtropics). The expected value (e.g. central tendancy) of urbanization rates in the tropics and subtropics is clearly distinct from that of the north. Cities in the tropics and subtropics represent a vast new market for energy services, including air conditioning, refrigeration, and consumer appliances.>
 
 ```{r read_urbanization_data, warning=FALSE, eval=TRUE}
 # setwd("~/Google Drive/Global_Trends/Data/UN_Population_Data/")
@@ -497,7 +503,7 @@ ggplot() +
   scale_colour_gradient(low="white", high="red", limits=quantile(decadal$Growth, probs=c(0.0, 1))) 
 ```
 
-```{r urbanization_PDF, fig.width=7, fig.height=4}
+```{r urbanization_PDF, fig.width=7, fig.height=4, eval=FALSE}
 ###### Begin Plot Population Growth Densities by Region ######
 test<-subset(cities, Year==2015)
 sm.density.compare(test$Growth, test$region, xlab="% Change (Annual)", xlim=quantile(test$Growth, probs=c(0.0,.99)))
@@ -522,19 +528,19 @@ The magnitude, timing, ramp-rate and ability to load-shift peak electrical deman
 
 
 ### Drivers of Urban Electricity Demand 
-In developed cities, building energy use accounts for roughly half of all greenhouse gas emissions attributable to that city (review of eight cities in the U.S. by Hillman and Ramaswami 2009). Specifically, electricity and heating fuel use in buildings generate (on average) as much GHG emissions as all surface trasportation, airline travel, upstream fuel processing, food production, cement manufacturing, potable water/wastewater treatment and long-distance freight combined that make life in cities possible (e.g. the flow of essential goods and services into and within cities; Hillman and Ramaswami 2009). Of the roughly 50% of urban GHG emissions attributalbe to building energy use, half of that (depending on climate) comes from electricity, with the other half coming from heating and industiral fuels (review of ten international cities by Kennedy et. al. 2010).
+In developed cities, building energy use accounts for roughly half of all greenhouse gas emissions attributable to that city (review of eight cities in the U.S. by Hillman and Ramaswami 2009). Specifically, electricity and heating fuel use in buildings generate (on average) as much GHG emissions as all surface trasportation, airline travel, upstream fuel processing, food production, cement manufacturing, potable water/wastewater treatment and long-distance freight, combined (e.g. the flow of essential goods and services into and within cities; Hillman and Ramaswami 2009). Of the roughly 50% of urban GHG emissions attributalbe to building energy use, roughly half of that (depending on climate and prevailing architectural design) comes from electricity, with the other half coming from heating and industiral fuels on a life-cycle basis (review of ten international cities by Kennedy et. al. 2010). 
 
-In developing cities, building energy use may account for a slightly smaller share of total city-wide GHG emissions, estimated at 43% for a case study of Delhi, India, using the same system boundaries and methodology as the aforementioned U.S. cities (Chavez et. al. 2012). 
+In developing cities, buildings account for a slightly smaller share of city-wide GHG emissions, estimated at 43% for a case study of Delhi, India, using the same system boundaries and methodology as for the aforementioned U.S. cities (Chavez et. al. 2012). 
 
 #### Integrated Assessment Models
-Eom et. al. (2012) identify five key variables that drive change in building energy use: (1) population growth, (2) economic growth, (3) urbanization, (4) per-capita floor space, and (5) demand for building energy services. This formulation is supported by Chatturvedi et. al. (2014), van Ruijven et. al. (2011), and serves as the foundation for a building energy sub-routine of the Global Change Assessment Model (GCAM), first developed by Edmonds and Reily (1983), and used widely in a long-lineage of studies since.
+Eom et. al. (2012) identify five structural variables that drive long-term building energy use: (1) population growth, (2) economic growth, (3) urbanization, (4) per-capita floor space, and (5) demand for building energy services. This formulation is supported by Chatturvedi et. al. (2014), van Ruijven et. al. (2011), and serves as the foundation for a building energy sub-routine of the Global Change Assessment Model (GCAM), first developed by Edmonds and Reily (1983), and used widely in a long-lineage of studies since.
 
-GCAM belongs to a class of models known as integrated assessment models, which  model a web of interactions between endogenous variables given exogenous boundary conditions (Edmonds and Reily 1983). Integrated assessment models such as GCAM are well-suited for high-level, economy-wide scenario analysis (see Wigley and Raper 1992; 2002, among many examples).
+GCAM belongs to a class of models known as integrated assessment models, which approximate a web of interactions between endogenous variables given exogenous boundary conditions (Edmonds and Reily 1983). Integrated assessment models such as GCAM are well-suited for high-level, economy-wide scenario analysis (see Wigley and Raper 1992; 2002, for two excellent examples among many).
 
 #### Physical-Based Models
-On the other end of the [urban energy modeling] spectrum are custom-built, physical-based models that require detailed climatological, meteorlogical and building inventory data. Physical-based models are well-suited to answer specific inquiries regarding near-term energy use at high resolution. They do not attempt to model interactions with the broader economy. There are literally hundreds of such models in the literature, and therfore we only attempt a cursory catalog of salient examples. 
+On the other end of the [urban energy modeling] spectrum are physical-based models that require detailed climatological, meteorlogical and building inventory data. Physical-based models are well-suited to answer specific inquiries regarding near-term energy use at high resolution. They do not attempt to model interactions with the broader economy. There are literally hundreds of such models in the literature, covering a wide range of building typologies and climate zones, and therfore, we only attempt a cursory catalog of salient examples. 
 
-Building energy demand for thermal comfort (in particular) has been evaluated for many parts of the world:
+Building energy demand for thermal comfort (in particular) has been evaluated for many regions of the world:
 
 * China (Wan et. al. 2010; Eom et. al. 2012)
 * Hong Kong (Lam et. al. 2010)
@@ -560,7 +566,10 @@ There have also been a large number of studies looking at the effect of climate 
 * Review article (Yao and Hasbi 2013)
 * Review article (Li 2012)
 
-A thrid category of urban energy demand models are statistical: regression, pure time-series, and mixed-method econometric models.
+Physical-based models are the gold-standard for simulating energy demand in a specific building or class of buildings. However, our study takes an urban-metabolism approach in which the behavior of the entire city is of interest. Few cities in the world publish full building-stock inventories (including residential, commericial, industrial, government and public buildings such as hospitals, libraries and schools) to reasonably estimate total urban energy demand from the bottom-up. For this reason, we opt for statistical approach (described next) using high-resolution electric utility data. 
+
+### Statistical Models
+A thrid class of urban energy demand models are statistical; including regression, pure time-series, and mixed-method econometric models.
 
 #### Regression Models
 Daily and seasonal variability in urban electricity demand is caused, to a large degree, by demand for cooling and heating, which is driven by meteorological factors (Segal et al.,1992; Thatcher, 2007).
@@ -573,7 +582,7 @@ Thatcher (2007) built a complex demand forecast model with over 50 model paramet
 
 All of these studies focus on detailed modeling for a particular mature utility and are therefore hard to generalize to other contexts. Our analysis draws upon consensus findings from the literature (e.g. electricity demand in urban areas is largely a function of temperature) to build our own streamlined urban electricity demand model. The purpose of our model is not precise prediction (we leave that to the electric utilities themselves), but rather a generalized framework that can be applied across multiple, data-sparse cities simultaneously with reasonable accuracy.
 
-One notable example in this direction (besides our own attemp) is Wan et. al. (2011). Their study is similar in spirit to ours, but differs considerably in methodology. They estimate baseline and future heating and cooling demand for a generic air-conditioned office building in five Chinese cities representing five distinct climate zones. They apply a novel approach for extracting orthogonal (non-redundant) information from colinear meteorological data (dry bulb temperature, wet bulb temperature and solar radiation) via Principal Component Analysis, and then apply the first principal component in a regression framework to estimate heating and cooling loads. They compare results with a physical-based building energy model. <more on this.>
+One notable example in this direction (besides our own attemp) is Wan et. al. (2011). Their study is similar in spirit to ours, but differs in methodology. They estimate baseline and future heating and cooling demand for a generic air-conditioned office building in five Chinese cities representing five distinct climate zones. Their study introduces a clever approach for extracting orthogonal (non-redundant) information from colinear meteorological data (dry bulb temperature, wet bulb temperature and solar radiation) via Principal Component Analysis, and then applies the first principal component in a regression framework to estimate building heating and cooling loads. Results are benchmarked to a physical-based building energy model as proof-of-concept. <more on this.>
 
 #### Time-Series and Econometric Models
 Rallapalli and Ghosh (2012) apply a non-stationary time-series model to accurately predict energy demand in all 5 regional power grids of India. Their model out-performs official forecasts of the Central Electricity Authority of India for both in-sample and out-of-sample prediction.
@@ -598,7 +607,7 @@ Next, we compare our city-specifc results for Delhi and Chanidargh (India) with 
 Similarly, applying Chaturvedi et. al. (2014) estimates (see Table 3), the average cooling load in Delhi would be equivalent to approximately 423 MW. We estimate peak demand for cooling at 5359 MW. By our estimation, Chaturvedi (2014) may be underestimating building-energy demand for cooling in Indian cities by an order of magnitude.  It should be noted that our estimate is for peak cooling demand, and Chaturvedi (2014) is for average cooling demand. However, the magnitude of difference is still far larger than attributable to this alone. Assuming an average cooling day in Delhi is just 10 °C above a 21 °C threshold temperature, that would still yield a cooling demand of approximately 1300 MW (see result 1).
 
 ## Objectives
-Energy demand projections abound, but are often saddled with excessive complexity (Bhattacharyya and Timilsina 2009). Complexity results in proliferation of model parameters, which in turn must be estimated, which in turn introduces multi-dimensional uncertainty, reduces degrees of freedom, diminishes generalizability and obfuscates interpretability. 
+Energy demand projections abound, but are often saddled with excessive complexity (Bhattacharyya and Timilsina 2009). Complexity translates to proliferation of estimated model parameters, which in turn compounds uncertainty, limits degrees of freedom, diminishes generalizability and obfuscates interpretability. 
 
 A review of multi-decadal energy demand forecasts for the U.S. economy were found to be consistently off the mark (Craig et al. 2002). Forecasts by the U.S. Department of Energy for 1975 to 2000 overestimated demand by up to a factor of 2. In fact, of a dozen independent energy forecasts evaluated, only one (Lovins 1979) proved accurate. "A perception that a complex model with extensive input data produces more accurate results might not be always true" (Bhattacharyya and Timilsina 2009, pg 8). The importance of parsimony in energy modeling cannot be overstated (Armstrong, 2001).
 
@@ -1342,10 +1351,10 @@ References
 [27] U.S. Census Bureau. Working at home is on the rise. http://www.census.gov/newsroom/releases/pdf/home_based_workers_us_infographic.pdf  
 [28] Commoner, Barry. “The Environmental Cost of Economic Growth.” in Population, Resources and the Environment. Washington, DC: Government Printing Office Pp. 339-63, 1972
 [29] Edmonds, J., M. Wise, H. Pitcher, R. Richels, T. Wigley, and C. MacCracken. (1997) “An Integrated Assessment of Climate Change and the Accelerated Introduction of Advanced Energy Technologies”, Mitigation and Adaptation Strategies for Global Change, 1, pp. 311-39.
-
-
-
-
+[30] IEA. FAQ. Available online at http://www.iea.org/aboutus/faqs/energyefficiency/. Accessed May 05 2015.
+[31] Runming Yao, Baizhan Li, Koen Steemers, Energy policy and standard for built environment in China, Renewable Energy, Volume 30, Issue 13, October 2005, Pages 1973-1988, ISSN 0960-1481, http://dx.doi.org/10.1016/j.renene.2005.01.013.
+(http://www.sciencedirect.com/science/article/pii/S0960148105000376)
+[32] Xu P, Huang J, Shen P, Ma X, Gao X, Xu Q, Xiang Y. Commercial building energy use in six cities in Southern China. Energy Policy 2013, 53:76–89. doi:10.1016/j.enpol.2012.10.002.
 
 
 
