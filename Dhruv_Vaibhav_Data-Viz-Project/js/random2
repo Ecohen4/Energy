@@ -1,0 +1,41 @@
+function drawMap(delhi) {
+	var featureCollection = topojson.feature(delhi, delhi.objects.delhi_licensee_final);
+	var discoms = topojson.feature(delhi, delhi.objects.delhi_licensee_final).features;
+
+	var bounds = d3.geo.bounds(featureCollection);
+	var x = d3.sum(bounds, function(d) {
+			return d[0];
+		}) / 2,
+		y = d3.sum(bounds, function(d) {
+			return d[1];
+		}) / 2;
+
+	var projection = d3.geo.mercator()
+		.center([x, y])
+		.scale(18000);
+
+	path.projection(projection);
+
+	d_map.selectAll(".discoms")
+		.data(discoms)
+		.enter().append("path")
+		.attr("class", "DiSCOM")
+		.attr("id", function(d) {
+			return "code_" + d.geometries.id;
+		}, true)
+		.attr("d", path);
+}
+
+function sequenceMap() {
+	var MWRange = getRange();
+	d3.selectAll(".discoms")
+	.transition()
+	.duration(750)
+	.attr("fill",function(d){
+		return getColor(d.geometries[attributeArray[currentAttribute]],dataRange);
+	})
+}
+
+console.log(attributeArray);
+
+,"#DFD143","#D8B138","#CC9334","#BB7633"

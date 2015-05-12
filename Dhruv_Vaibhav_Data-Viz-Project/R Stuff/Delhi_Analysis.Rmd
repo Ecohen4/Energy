@@ -1,0 +1,204 @@
+---
+title: "Delhi_Analysis"
+author: "Dhruv Nair"
+date: "Monday, April 20, 2015"
+output: html_document
+---
+
+
+####Loading Data and Libraries####
+
+For our initial analysis on the Delhi Data, we will be using just the plyr and ggplot2 libraries. This markdown shows the steps taken to manipulate the data into a more manageable format, and provides plots that form the basis of our initial inferences. 
+ 
+```{r}
+library(plyr)
+
+setwd("C:/Users/suresh/Documents/Github/Data-Viz-Project")
+Delhi_Demand_Hourly <- read.csv("Delhi_Discoms_Hourly_Demand.csv")
+Delhi_Weather_Hourly <- read.csv("Delhi_Discom_Hourly.csv")
+
+#subsetting for the years 2011-2013
+Delhi_Demand_Hourly <- subset(Delhi_Demand_Hourly,YR>=2011 & YR<=2013)
+Delhi_Demand_Hourly <- subset(Delhi_Demand_Hourly,YR>=2011 & YR<=2013)
+
+str(Delhi_Demand_Hourly)
+str(Delhi_Weather_Hourly)
+
+#Adding Date Variable to the energy data and weather data
+Delhi_Demand_Hourly$Date <- as.character(paste(Delhi_Demand_Hourly$YR,Delhi_Demand_Hourly$M,Delhi_Demand_Hourly$D,sep="-"))
+Delhi_Weather_Hourly <- rename(Delhi_Weather_Hourly,c("hours"="Date"))
+
+#Turning Date into POSIX object
+Delhi_Demand_Hourly$Date <- as.POSIXct(Delhi_Demand_Hourly$Date)
+Delhi_Weather_Hourly$Date <- as.POSIXct(Delhi_Weather_Hourly$Date)
+
+#Ordering the Demand Data by Date instead of by hour
+Delhi_Demand_Hourly <- Delhi_Demand_Hourly[order(as.POSIXct(Delhi_Demand_Hourly$Date)),]
+
+```
+
+Now that the data has been organized by Date and has a valid timestamp element, we can begin to break it down into more manageable sections.
+```{r}
+
+#Subsetting energy demand data by DISCOM
+Delhi_Demand_BRPL <- subset(Delhi_Demand_Hourly,city=="Delhi - BRPL",select=city:Date)
+Delhi_Demand_BYPL <- subset(Delhi_Demand_Hourly,city=="Delhi - BYPL",select=city:Date)
+Delhi_Demand_NDMC <- subset(Delhi_Demand_Hourly,city=="Delhi - NDMC",select=city:Date)
+Delhi_Demand_NDPL <- subset(Delhi_Demand_Hourly,city=="Delhi - NDPL",select=city:Date)
+Delhi_Demand_MES <- subset(Delhi_Demand_Hourly,city=="Delhi - MES",select=city:Date)
+
+#Subsetting the weather data by each DISCOM
+Delhi_Weather_BRPL <- subset(Delhi_Weather_Hourly,city=="Delhi - BRPL",select=c(Date,city,YR,M,D,HR,TEMP,DEW.POINT))
+Delhi_Weather_BYPL <- subset(Delhi_Weather_Hourly,city=="Delhi - BYPL",select=c(Date,city,YR,M,D,HR,TEMP,DEW.POINT))
+Delhi_Weather_NDMC <- subset(Delhi_Weather_Hourly,city=="Delhi - NDMC",select=c(Date,city,YR,M,D,HR,TEMP,DEW.POINT))
+Delhi_Weather_NDPL <- subset(Delhi_Weather_Hourly,city=="Delhi - NDPL",select=c(Date,city,YR,M,D,HR,TEMP,DEW.POINT))
+Delhi_Weather_MES <- subset(Delhi_Weather_Hourly,city=="Delhi - MES",select=c(Date,city,YR,M,D,HR,TEMP,DEW.POINT))
+
+```
+Due to some inconsistencies with the data types in the Energy and Weather data sets, we chose to merge them by both the Date and HR variable.
+```{r}
+#Merge Demand and Weather Data
+Delhi_BRPL <- merge(Delhi_Demand_BRPL,Delhi_Weather_BRPL,by=c("HR","Date"))
+Delhi_BYPL <- merge(Delhi_Demand_BYPL,Delhi_Weather_BYPL,by=c("HR","Date"))
+Delhi_NDMC <- merge(Delhi_Demand_NDMC,Delhi_Weather_NDMC,by=c("HR","Date"))
+Delhi_NDPL <- merge(Delhi_Demand_NDPL,Delhi_Weather_NDPL,by=c("HR","Date"))
+Delhi_MES <- merge(Delhi_Demand_MES,Delhi_Weather_MES,by=c("HR","Date"))
+
+```
+
+####Analysis####
+```{r}
+#Run ddply to summarize data
+library(plyr)
+
+#Average Daily Energy Demand and Average Daily Temperature
+Delhi_BRPL <- ddply(Delhi_BRPL,"Date",mutate,Average.Daily.MW = mean(MW),Average.Daily.Temp=mean (TEMP),Average.Daily.DewPoint=mean(DEW.POINT))
+Delhi_BYPL <- ddply(Delhi_BYPL,"Date",mutate,Average.Daily.MW = mean(MW),Average.Daily.Temp=mean (TEMP),Average.Daily.DewPoint=mean(DEW.POINT))
+Delhi_NDMC <- ddply(Delhi_NDMC,"Date",mutate,Average.Daily.MW = mean(MW),Average.Daily.Temp=mean (TEMP),Average.Daily.DewPoint=mean(DEW.POINT))
+Delhi_NDPL <- ddply(Delhi_NDPL,"Date",mutate,Average.Daily.MW = mean(MW),Average.Daily.Temp=mean (TEMP),Average.Daily.DewPoint=mean(DEW.POINT))
+Delhi_MES <- ddply(Delhi_MES,"Date",mutate,Average.Daily.MW = mean(MW),Average.Daily.Temp=mean (TEMP),Average.Daily.DewPoint=mean(DEW.POINT))
+
+```
+
+```{r}
+Delhi_BRPL <- subset(Delhi_BRPL,select=c(HR,Date,city.x,YR.x,M.x,D.x,MW,TEMP,DEW.POINT,Average.Daily.MW,Average.Daily.Temp,Average.Daily.DewPoint))
+
+Delhi_BYPL <- subset(Delhi_BYPL,select=c(HR,Date,city.x,YR.x,M.x,D.x,MW,TEMP,DEW.POINT,Average.Daily.MW,Average.Daily.Temp,Average.Daily.DewPoint))
+
+Delhi_NDMC <- subset(Delhi_NDMC,select=c(HR,Date,city.x,YR.x,M.x,D.x,MW,TEMP,DEW.POINT,Average.Daily.MW,Average.Daily.Temp,Average.Daily.DewPoint))
+
+Delhi_NDPL <- subset(Delhi_NDPL,select=c(HR,Date,city.x,YR.x,M.x,D.x,MW,TEMP,DEW.POINT,Average.Daily.MW,Average.Daily.Temp,Average.Daily.DewPoint))
+
+Delhi_MES <- subset(Delhi_MES,select=c(HR,Date,city.x,YR.x,M.x,D.x,MW,TEMP,DEW.POINT,Average.Daily.MW,Average.Daily.Temp,Average.Daily.DewPoint))
+```
+
+
+
+####Intial Plots#####
+```{r}
+
+library(ggplot2)
+
+#Plot energy demand over a single day for three years
+plot_Date_MW <- ggplot(Delhi_BRPL,aes(x=Date,y=MW,colour=city.x)) + theme_minimal() + ylim(0,2500) + scale_colour_manual("DISCOMS\n",values=c("#603B50","#545A76","#327A87","#77AB5E","#C9B64D")) + ggtitle("Daily Energy Use Over Time")
+
+
+plot_Date_MW <- plot_Date_MW + geom_point(size=1.5,alpha=0.75)
+plot_Date_MW <- plot_Date_MW + geom_point(data=Delhi_NDPL,size=1.5,alpha=0.35)
+plot_Date_MW <- plot_Date_MW + geom_point(data=Delhi_BYPL,size=1.5,alpha=0.5) 
+plot_Date_MW <- plot_Date_MW + geom_point(data=Delhi_NDMC,size=1.5,alpha=0.5)
+plot_Date_MW <- plot_Date_MW + geom_point(data=Delhi_MES,size=1.5,alpha=1)
+
+```
+
+```{r}
+#Plot average daily energy demand over three years
+plot_Avg_Time <- ggplot(Delhi_BRPL,aes(x=Date,y=Average.Daily.MW,colour=city.x)) + theme_minimal() + ylim(0,2500) + scale_colour_manual("DISCOMS\n",values=c("#603B50","#545A76","#327A87","#77AB5E","#C9B64D")) + ggtitle("Average Daily Energy Use OVer Time")
+
+plot_Avg_Time <- plot_Avg_Time + geom_line(size=0.5)
+plot_Avg_Time <- plot_Avg_Time + geom_line(data=Delhi_NDPL,size=0.5)
+plot_Avg_Time <- plot_Avg_Time + geom_line(data=Delhi_BYPL,size=0.5)
+plot_Avg_Time <- plot_Avg_Time + geom_line(data=Delhi_NDMC,size=0.5)
+plot_Avg_Time <- plot_Avg_Time + geom_line(data=Delhi_MES,size=0.5)
+
+#Plot average temperature over three years
+plot_TEMP <- ggplot(Delhi_BRPL,aes(x=Date,y=Average.Daily.Temp,colour=TEMP)) + theme_minimal() + ggtitle("Average  Temperature over Three Years") + geom_line(size=0.5)
+plot_TEMP <- plot_TEMP + scale_colour_gradient(low="#F18D77",high="#8C4F43",space = "Lab",guide="colourbar")
+
+```
+
+```{r}
+#Plot temperature over time of day for three years
+plot_Temp_Time <- ggplot(Delhi_BRPL,aes(x=Date,y=HR,fill=TEMP)) + theme_minimal() + ylim(0,23) + geom_boxplot(size=2,alpha=1) + scale_fill_gradient(low="#6BC8E7",high="#B76159",space = "Lab",guide="colourbar") + ggtitle("Temperature Over 24 Hours for Three Years")
+
+#Plot dew point over time against temperature
+plot_Dew_Time <- ggplot(Delhi_BRPL,aes(x=Date,y=DEW.POINT,colour=TEMP)) + theme_minimal() + ylim(0,50) + geom_tile(size=1.5,alpha=0.65) + scale_colour_gradient(low="#6BC8E7",high="#B76159",space = "Lab",guide="colourbar") + ggtitle("Temperature and Dew Point Over Three Years")
+
+#Plot Average Daily Temperature 
+
+#Plot average daily MW vs Temperature
+plot_Avg_Temp <- ggplot(Delhi_BRPL,aes(x=TEMP,y=Average.Daily.MW,colour=city.x)) + theme_minimal() + geom_line(size=0.75,alpha=0.65) + scale_colour_manual("DISCOMS\n",values=c("#603B50","#545A76","#327A87","#77AB5E","#C9B64D")) + ggtitle("Average Daily Energy vs Temperature") 
+plot_Avg_Temp <- plot_Avg_Temp + geom_line(data=Delhi_BYPL,size=0.75,alpha=0.65)
+plot_Avg_Temp <- plot_Avg_Temp + geom_line(data=Delhi_NDPL,size=0.75,alpha=0.65)
+plot_Avg_Temp <- plot_Avg_Temp + geom_line(data=Delhi_NDMC,size=0.75,alpha=0.65)
+plot_Avg_Temp <- plot_Avg_Temp + geom_line(data=Delhi_MES,size=0.75,alpha=0.65)
+
+
+```
+
+####Functions####
+```{r}
+
+#Function to remove duplicate entries
+Duplicatr <- function(df) {  
+  df[!duplicated(df),] 
+}
+
+#Function to put multiple plots on a single graph
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+```
+
+```{r fig.width=10, fig.height=9}
+library(ggplot2)
+plot_Date_MW
+plot_Avg_Time
+plot_Avg_Temp
+plot_Temp_Time
+plot_Dew_Time
+```
+
