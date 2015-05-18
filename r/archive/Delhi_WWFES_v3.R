@@ -33,6 +33,8 @@ CGSplot <- ggplot(CGS, aes(x=Date, y=t_energy_month/10)) +
   labs(Title="Montly CGS allocatsion to Delhi", y="Energy (GWh)") +
   theme_minimal()
 
+CGSplot
+
 ## USEFUL FOR VISUAL INPSECTION OF PLANT-LEVEL DATA...
 ## filter out PPs below a certain threshold of annual allocation to Delhi
 
@@ -272,6 +274,9 @@ p3 <- ggplot(merge,aes(x=Date,y=WF,colour=metric,linetype=stat)) +
   scale_y_continuous(name="Million Liters Freshwater per Month") +
   theme_minimal()
 
+p3
+
+## now show mean withdrawals only
 mean <- subset(merge, stat=="mean")
 mean <- droplevels(mean)
 
@@ -284,11 +289,14 @@ p3mean <- ggplot(mean, aes(x=Date, y=WF, colour=metric)) +
   theme(legend.position="bottom") +
   theme(axis.title.y = element_text(angle=90))
 
-## now show mean withdrawals only
-W<-ggplot(Withdrawals,aes(x=Date,y=WF,colour=Fuel,linetype=stat)) + geom_line()
+p3mean
 
-TotalTBWF<-ddply(merge, .(year,month_id,POSIXct,Date,metric,stat),summarize,WF=sum(WF))
+# sum over all the TB stations
+TotalTBWF<-ddply(merge, .(year,month_id,Date,metric,stat),summarize,WF=sum(WF))
 
+ggplot(TotalTBWF, aes(x=Date, y=WF, linetype=stat, colour=metric)) + geom_line() + facet_wrap(~metric) + theme_bw()
+
+# label variable as TB for merge with IB later...
 TotalTBWF$Scale<-"Trans-boundary"
 
 ## Allocations from CGS to Delhi represent TB energy supply (and WWFES)
@@ -305,17 +313,20 @@ library(ggplot2)
 library(scales)
 
 load("OwnGen.rsav")
-OwnGen=read.xlsx(file="/Users/elliotcohen/Google Drive/Data/Electricity/SLDC/Delhi_Own_Gen_by_PP_Monthly_2011-2012.xlsx",sheetIndex=1,as.data.frame=TRUE,header=TRUE)
+
+# April 2011 to March 2012
+OwnGen=read.xlsx(file="/Users/elliotcohen//Dropbox/data/Electricity/CEA/Data/Delhi_Own_Gen_by_PP_Monthly_2011-2012.xlsx",sheetIndex=1,as.data.frame=TRUE,header=TRUE)
 
 #convert any NA's to zeros
 OwnGen[,][is.na(OwnGen[,])]<-0
 
-#create POSIXct time series
-# Day is arbitrary b/c data is monthly
-OwnGen$POSIXct<-as.POSIXct(paste(OwnGen$year,OwnGen$month_id,'01',sep='-'),format='%Y-%m-%d',tz='IST')
+# #create POSIXct time series
+# OwnGen$POSIXct<-as.POSIXct(paste(OwnGen$year,OwnGen$month_id,'01',sep='-'),format='%Y-%m-%d',tz='IST')
+# OwnGen$Date<-as.Date(OwnGen$POSIXct,"%Y-%m-%d")
 
 #add Date (day is arbitrary b/c data is monthly)
-OwnGen$Date<-as.Date(OwnGen$POSIXct,"%Y-%m-%d")
+# Day is arbitrary b/c data is monthly
+OwnGen$Date <- as.Date(paste(OwnGen$year,OwnGen$month_id,'15',sep='-'),format='%Y-%m-%d')
 
 # Add Monsoon/non-Monsoon attribute
 n=dim(OwnGen)[1]
@@ -482,12 +493,25 @@ ddply(Withdrawals, .(),summarize ,Capacity_total=sum(Installed.Capactiy.MW), PLF
 OwnGen$stn_code<-OwnGen$Station
 
 # Total WF of Delhi Own Gen
-TotalIBWF<-ddply(OwnGen, .(year,month_id,POSIXct,Date,metric,stat),summarize,WF=sum(WF))
+TotalIBWF<-ddply(OwnGen, .(year,month_id,Date,metric,stat),summarize,WF=sum(WF))
+
+ggplot(TotalIBWF, aes(x=Date, y=WF, linetype=stat, colour=metric)) + geom_line() + facet_wrap(~metric) + theme_bw()
+
+# label variable as TB for merge with IB later...
 TotalIBWF$Scale<-"In-boundary"
 
 #######################
 # Total WF (Showing min, mean and max estimates for both In-boundary and Trans-boundary)
 #########################
+# before combining, set both df to same date range
+range(OwnGen$Date)
+range(TotalIBWF$Date) # 1yr
+range(TotalTBWF$Date) # 2yr
+
+range(subset(TotalTBWF, TotalTBWF$Date >= range(TotalIBWF$Date)[1] & TotalTBWF$Date <= range(TotalIBWF$Date)[2])$Date) # trim 2yr to 1yr
+
+TotalTBWF <- subset(TotalTBWF, TotalTBWF$Date >= range(TotalIBWF$Date)[1] & TotalTBWF$Date <= range(TotalIBWF$Date)[2])
+
 TotalWF<-rbind(TotalIBWF,TotalTBWF)
 p<-ggplot(TotalWF, aes(x=Date,y=WF/10^3,linetype=stat,colour=Scale)) + geom_line() + facet_wrap(~metric, scale="free") + scale_y_continuous(name="Billion Liters Freshwater"); p
 
@@ -511,13 +535,15 @@ percap<-ggplot(TotalWF,aes(x=Date,y=percap/30,colour=metric,linetype=stat)) + ge
 ddply(TotalWF, .(metric,stat), numcolwise(sum))
 # Show combined (IB+TB)
 # Total WF (Showing min, mean and max combined estiamtes (IB+TB)
-SumWF<-ddply(TotalWF, .(year,month_id,POSIXct,Date,metric,stat),summarize,WF=sum(WF))
-p2<-ggplot(SumWF, aes(x=Date,y=WF,linetype=stat,colour=metric)) + geom_line() + facet_wrap(~metric) + scale_x_date(labels = date_format("%b"), breaks="2 month", name="Month") + scale_y_continuous(name=ylab2); p2
+SumWF <- ddply(TotalWF, .(year,month_id,Date,metric,stat),summarize,WF=sum(WF))
+
+p2<-ggplot(SumWF, aes(x=Date, y=WF, linetype=stat,colour=metric)) + geom_line() + facet_wrap(~metric) + scale_x_date(labels = date_format("%b"), breaks="2 month", name="Month") + scale_y_continuous();
+p2
 
 SumWFmean<-subset(SumWF, stat=="mean")
 SumWFmeanp<-ggplot(SumWFmean,aes(x=Date,y=WF/10^3,colour=metric)) + geom_line()
 
-p3<-SumWFmeanp + scale_x_date(labels = date_format("%b"), breaks="2 month", name="Month") + labs(title="Total water footprint of Delhi's electricity supply") + scale_y_continuous(name=ylab2); p3
+p3<-SumWFmeanp + scale_x_date(labels = date_format("%b"), breaks="2 month", name="Month") + labs(title="Total water footprint of Delhi's electricity supply") + scale_y_continuous(); p3
 
 ## annual sum
 ddply(SumWFmean, .(metric,stat), summarize, WF.Annual=sum(WF))
