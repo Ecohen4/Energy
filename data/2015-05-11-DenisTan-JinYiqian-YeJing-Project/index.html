@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+		<title>Multi-City Energy Analysis</title>
+		<link rel="stylesheet" type"text/css" href="app.css">
+		<script type = "text/javascript" src="js/d3.v3.js"></script>
+		<script type = "text/javascript" src="topojson.v0.min.js"></script>
+		<script type="text/javascript" src="./tooltip.js"></script>
+		<script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+		<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+		<script type="text/x-mathjax-config">
+			if (typeof MathJaxListener !== 'undefined') {
+				MathJax.Hub.Register.StartupHook('End', function () {
+		   		 MathJaxListener.invokeCallbackForKey_('End');
+			  });
+			}
+		</script>
+	</head>
+
+	<body>
+		<div class="container-fluid main-container">
+
+
+			<div id="header">
+				<h1 class="title">A Data-driven Approach to Identify Peer-cities for Sharing of Best Practices in Energy Management</h1>
+				<p>This paper and its visualizations can be found at <a href="http://denistanwh.github.io">http://denistanwh.github.io</a>.</p>
+				<h4 class="author"><em>By <a href="https://www.linkedin.com/in/yiqianjin">Yiqian Jin</a>, <a href="https://www.linkedin.com/in/denistanwh">Denis Tan</a>, <a href="https://www.linkedin.com/pub/jing-ye/97/935/1b0/en">Jing Ye</a>, and <a href="http://www.earth.columbia.edu/articles/view/58#Cohen">Elliot Cohen</a></em></h4>
+				<h4 class="date"><em>18 May 2015</em></h4>
+			</div>
+
+			<div id="TOC">
+				<ul>
+					<li><a href="#motivation">Motivation</a></li>
+					<li><a href="#grouping-of-cities">Grouping of Cities</a><ul>
+						<li><a href="#methodology1">Methodology</a></li>
+						<li><a href="#results-discussion1">Results &amp; Discussion</a></li>
+						<!--<li><a href="#visualization">Visualiation</a></li>-->
+					</ul></li>
+					<li><a href="#forecasting-energy-demand">Forecasting Energy Demand</a><ul>
+						<li><a href="#methodology2">Methodology</a></li>
+						<li><a href="#results-discussion2">Results &amp; Discussion</a></li>
+					</ul></li>
+					<li><a href="#conclusion">Conclusion</a></li>
+					<li><a href="#references">References</a></li>
+				</ul>
+			</div>
+
+			<div id="motivation" class="section level2">
+				<h2>Motivation</h2>
+					<p>
+						Global energy demand is expected to rise by 37% from 2014 to 2040 (<a href="#cite2">IEA, 2014</a>). However, three quarters of the global energy supply in 2040 will still be fossil-based (<a href="#cite2">IEA, 2014</a>), exacerbating anthropogenic climate change as we attempt to meet this expanding demand. While cities will drive most of the predicted demand expansion (<a href="#cite3">The New Climate Economy, 2014</a>), they can be leading advocates on reducing per capita consumption to mitigate climate change (<a href="#cite1">C40, n.d.</a>). To this end, there are numerous global and regional networks that bring city policy makers together to facilitate the sharing of best practices to reduce their respective energy intensities. These include C40 (<a href="#cite1">C40, n.d.</a>), World Cities Network (<a href="#cite4">WCN, 2015</a>), ICLEI (<a href="#cite5">ILCEI, n.d.</a>), and many others.
+					</p>
+					<p>
+						Cross-city collaboration on reducing enegy demand tends to be politically- and economically-driven rather than data-driven. For instance, Chinese cities, despite having vastly different climate, have attempted to glean best practices from Singapore in the energy domain (<a href="#cite6">WEF, 2012</a>). Best practices gleaned from political and economic partners, while certainly of value, may be less effective due to the intrinsic differences in factors driving energy demand. Notably, climatic differences are known to have significant impact on building heating and cooling loads (<a href="#cite7">Wan, Li, Liu, & Lam, 2011</a>).  Thus, there is value in identifying clusters of cities with similar energy demand patterns to make the sharing of best practices more efficient. This provides a data-driven perspective to cross-city collaboration that is intended to augment, not supercede current political and economic networks. This project builds on the foundation of energy profile clustering (<a href="#cite16">Rhodes et al., 2014</a>). 
+					</p>
+					<p>
+						Energy demand is a function of many variables, including demographics, climate, and development stage. Much work has been done on energy demand forecasting, resulting in increasingly realistic but complex models. This paper presents a data-driven approach to identifying groups of cities with similar demand pattern to optimize collaboration. We also forecast and visualizes short-term energy demand for one sample city of each group to ascertain if demand forecasting works better with some demand profiles than others.
+					</p>
+					<p>
+						Our approach is agnostic to the underlying structural factors driving demand and deals only with the empirical demand pattern, using a simple clustering method for grouping and well-cited time-series method for forecasting. This project builds upon the work of Cohen, Torbey, Piccirilli, Tian, & Modi (<a href="#cite8">2015</a>) on global trends in urban heating and cooling at <a href="http://sel.columbia.edu/">The Sustainable Engineering Lab</a> of <a href="http://www.columbia.edu/">Columbia University</a>. We use their dataset of electrical energy demand from 43 localities (39 cities and 4 states) around the world. On this basis, we limit our scope to electrical energy. Their project and the associated dataset is obtainable from: <a href="https://github.com/ecohen4/energy">https://github.com/ecohen4/energy</a>.
+					</p>
+					<p>
+						We visualized the work through a three step procedure using <a href="http://d3js.org/">d3.js</a> (<a href="#cite9">Bostock, 2013</a>). First, we present a world map centered in the Pacific to depict the cities we considered for this project (see Figure 4). Second, we zoom in to the 4 groups of cities and present their average daily energy demand over a period of 365 days. Each group of cities are visualized in a chart (Figures 5 to 8). Third, we further zoom in to the city level and visualize the energy forecast for one sample city in each of the 4 groups. This is hidden unless the reader decides to interact with the paper by clicking the <em>Visualize</em> button. This cascade of visualizations emphasizes the “drill-down” technique espoused by Schneiderman (<a href="#cite10">1996</a>) in his seminal paper on the visual information seeking mantra. This way, the first visualization provides an overarching overview before the second and third visualization take reader into greater and greater detail. At the same time, we have kept the visualizations minimalist to maximize data-ink and minimize chart-junk (<a href="#cite11">Tufte, 1983</a>).
+					</p>
+			</div>
+				
+			<div id="grouping-of-cities" class="section level2">
+				<h2>Grouping of Cities</h2>
+					<div id="methodology1" class="section level3">
+							<h3>Methodology</h3>
+							<!--<div id="cluster-analysis-k-means-algorithm" class="section level4">
+								<h4>Cluster Analysis &amp; K-means Algorithm</h4>-->
+									<p>
+										To group localities, we apply cluster analysis. Clustering involves grouping objects in such a way that objects in the same group are more similar, by some pre-determined measure, to each other than to those in other groups. This is a fundamental concept in exploratory data mining, and a frequently-used method for statistical data analysis in many fields such as machine learning and pattern recognition (<a href="#cite12">Kaufman &amp; Rousseeuw, 2009</a>).
+									</p>
+									<p>
+										One particular method of implementing cluster analysis is K-means clustering (<a href="#cite14">Witten &amp; Hastie, 2014</a>). It is a simple approach to group data into K distinct, non-overlapping clusters. The following algorithm depicts K-means clustering:
+									</p>
+										<ol style="list-style-type: decimal">
+											<li>Randomly assign a number, from 1 to K, to each of the observations. These serve as initial cluster assignments for the observations.</li>
+											<li>For each of the K clusters, compute the cluster centroid. The Kth cluster centroid is the vector of the p feature means for the observations in the Kth cluster.</li>
+											<li>Assign each observation to the cluster whose centroid is closet (where closest is defined using Euclidean distance).</li>
+											<li>Iterate until the cluster assignment stops changing:</li>
+										</ol>
+									<p>
+										We implemented cluster analysis using a three-step procedure: pre-processing, grouping, and analysis.
+									</p>
+									<p>
+										First, we pre-processed and trimmed the raw dataset from an unbalanced panel of energy demand data of 48 (43 distinct energy demand profiles as we have data from 6 measurement locations within Delhi, India) localities. We do this by dropping energy demand profiles that meet any of the four criteria:
+										<ol style="list-style-type: decimal">
+											<li>Cities with less than a full calendar year of energy data;</li>
+											<li>Cities that have a visually obvious number of physically-impossible, zero-valued (representing recording error) data; </li>
+											<li>Cities with duplicative energy demand profiles (We randomly keep one of the six available energy profiles of Delhi);</li>
+											<li>State-level data (However, we retain two of the four states for comparison and discussion).</li>
+										</ol>
+									</p>
+									<p>The trimmed dataset has 30 localities (28 cities and 2 states in Australia) remaining. For cities, we will refer to the 30 localities as cities. The energy demand data, in MW, was also aggregated from the half-hourly level to the daily-level to reduce the size of the dataset for quick computations. Data at the half-hourly level is unnecessarily granular for cluster analysis that spans a full calendar year. We then normalized energy demand by subtracting the mean and dividing the result by the standard deviation. This normalization ensures that data from all cities are mean zero and standard deviation one, making it possible to compare. The trimmed dataset is depicted below in Figure 1.
+									</p>
+									<p>
+										<b>Figure 1: Plot of Average Daily Energy Demand Data of 30 Cities Over 1 Calendar Year</b><br /><img src="paper/Fig1.png" alt="image" width="840"/>
+									</p>
+									<!--<p>
+										Figure 1 is visualized with the following code in R:
+									</p>
+									<pre class="r">
+										<code>
+ggplot(data = sub, aes(x = day, y = MW, color = city)) + geom_line() + facet_wrap(~city, scales = &quot;free&quot;)
+last_plot() + scale_x_datetime(labels = date_format(&quot;%b&quot;))
+</code>
+									</pre>-->
+									<p>
+										Second, we group the data from 30 cities into four groups (clusters) using the aforementioned K-means algorithm. We implemented this using the default <em>kmeans()</em> function in the <em>{stat}</em> package of the open-sourced statistical software, R (version 3.0.2).
+									</p>
+									<p>
+										We note various issues associated with the method applied. First, we are aware that groups obtained using the k-means method represent local rather than global optimum. Hence, soltuions obtained from this method may be dependent on the initial condition and number of iterations. To reduce the impact of this limitation, we chose to increase the number of iterations during computation to obtain stable clustering results. Specifically, we set the iteration count to 20 and simulated 10 different starting points. The result is convergent as expected. Secondly, in this approach, as in most clustering analyses, the number of clusters is pre-specified. Hence, prior knowledge of the number of groups is required. Mathematically, there are multiple tests that could determine the optimal number of groups, with different methods providing slightly different results. In this paper, we use the R function <em>NbClust</em> from package <em>{NbClust}</em> to obtain the optimal number of clusters by computing the Hubert Statistic for the clusters as well as the second differences. The Hubert Statistic is a similarity function used to determine effectiveness of clustering (<a href="#cite15">Zaki, 2012</a>). The results of the NbClust analysis is provided in Figure 2. From the test results, the Hubert Statistic performance is acceptable with three or more clusters (groups). We visually inspect the data and settled on four clusters.
+									</p>
+									<p>
+										<b>Figure 2: Results of NbClust Test</b><br /><img src="paper/NbClust.png" alt="image" width = "600"/>
+									</p>
+									<p>Figure 2 is visualized with the following code in R:
+									</p>
+									<pre class="r">
+										<code>
+res &lt;- NbClust(data.6, diss = NULL, distance = &quot;euclidean&quot;, min.nc = 2, max.nc = 10, method = &quot;kmeans&quot;, index = &quot;hubert&quot;)
+										</code>
+									</pre>
+									<p>
+										Finally, we interpret the results from clustering. We explore if algorithmic results correspond with our intuitiion based on the geographic location and local climate of the various cities. This will be discussed in the Result &amp; Discussion section.
+									</p>
+							</div>
+					</div>
+					<div id="results-discussion1" class="section level3">
+						<h3>Results &amp; Discussion</h3>
+							<p>Through clustering, we obtained the following four clusters.
+								<ol style="list-style-type: decimal">
+									<li>Cluster 1: Abidjan, Eugene, Tacoma, Queensland</li>
+									<li>Cluster 2: Dakar, Honolulu, Manila, Mbabane, Nairobi, Singapore, Antigua</li>
+									<li>Cluster 3: Amman, Chattanooga, Colorado Springs, Kansas City, Louisville, New York, Omaha, Springfield, Tokyo, Detroit, Indianapolis, Philadelphia</li>
+									<li>Cluster 4: North Little Rock, El Paso, Los Angeles, Memphis, Sacramento, Delhi - BRPL, New South Wales</li>
+								</ol> 
+							</p>
+							<p>Figure 3 visually depicts the result of clustering.</p>
+							<p><b>Figure 3: Visualization of the 4 Clusters of Cities</b><br /><img src="paper/Fig7.png" alt="image" width = "840"/><br /></p> 
+							<p>
+								From the figure, it is clear that the cities have been appropriately clustered according to the shape of their daily energy demand over the period of a single calendar year. Cluster 1 cities appear to have energy demand peak in January and trough in August. Cluster 2 cities appear to have a relatively flat energy demand profile throughout the year. Cluster 3 cities appear to have 2 peaks in energy demand per year in both January and August. Finally, cluster 4 cities appear to also have 2 peaks but the peak in January is much less pronounced.
+							</p>
+							<!--<p>Figure 4 is visualized using the following code:</p>
+							<pre class="r">
+											<code>
+		ggplot(data = data.7, aes(x = day, y = MW, color = city)) + geom_line() + facet_wrap(~cluster, scales=&quot;free&quot;)
+											</code>
+							</pre>-->
+										<p>The map in Figure 4 shows the geographical location of these 30 cities.</p>
+										<p><b>Figure 4: Geographic Location of 30 Cities</b>
+											<br />
+											<div id="Map"> 
+												<script type = "text/javascript"src="map.js"></script>
+											</div>
+											<br />
+											<i>Cluster 1 cities are in green; Cluster 2 cities are in purple; Cluster 3 cities are in red; and Cluster 4 cities are yellow</i>
+										</p>
+								
+										<div id="cluster-1" class="section level4">
+											<h4>Cluster 1</h4>
+												<!--<p>Figure 6 depicts the energy demand profile for cluster 1 cities.</p>-->
+												<p><b>Figure 5: Cluster 1 Normalized Energy Demand Plot Over 1 Year</b>
+													<br />
+													<div id="ClusterViz1">
+														<script type = "text/javascript"src="cluster1.js"></script>
+													</div>
+												</p>
+												<p>
+													Recall that, energy Demand is normalized by subtracting its mean and dividing the result by its standard deviation over the duration considered.
+												</p>
+												<p>Cities in Cluster 1 are: Abidjan, Eugene, Tacoma, Queensland.</p>
+												<p>In this cluster, yearly energy profile has a 'U' shape, with the peak in January (boreal winter, austral summer) and a smooth valley in August (boreal summer, austral winter). Intuitively, this pattern should correspond with cities of one of two specifications:
+												</p>
+												<ol style="list-style-type: decimal">
+													<li>Cities in the northern hemisphere that have mild summers such that air-conditioning use is not significant and winters that require some electrical heating.</li>
+													<li>Cities in the southern hemisphere that have mild winters such that heating is not significant and summers that require some form of air-conditioning use.</li>
+												</ol>
+												<p>
+													Eugene and Tacoma are both located in northwestern USA. Their proximity to the Pacific Coast mean that they are affected by warm currents, causing their seasons to be marked by warm, dry summers and wet, cool-to-chilly winters. Over the course of a year, their temperature typically varies from 38°F to 76°F and is rarely below 31°F or above 85°F. Hence, Tacoma and Eugene fall into the first of the two aforementioned types of cities.
+												</p>
+												<p>
+													Queensland is located in Australia in the southern hemisphere. The strong summers and mild winter mean that it corresponds to the second type of cities.
+												</p>
+												<p>
+													Abidjan, however, seems to be an outlier. Abidjan is a tropical city which should not have a ‘U’ shaped energy demand profile. This could potentially have been caused by the similarity of ‘U’ shaped profiles and flat profiles, constituting a limitation to the k-means method of clustering cities.
+												</p>
+										</div>
+										<div id="cluster-2" class="section level4">
+											<h4>Cluster 2</h4>
+												<!--<p>Figure 7 depicts the energy demand profile for cluster 2 cities.</p>-->
+												<p><b>Figure 6: Cluster 2 Normalized Energy Demand Plot Over 1 Year</b>
+													<br />
+													<div id="ClusterViz2">
+														<script type = "text/javascript"src="cluster2.js"></script>
+													</div>
+												</p>
+												<p>Cities in Cluster 2 are: Dakar, Honolulu, Manila, Mbabane, Nairobi, Singapore, Antigua.</p>
+												<p>
+													In this cluster, the energy demand profile appears to be flat. In other words, the seasonal fluctuations in energy demand is much less pronounced. Intuitively, this patterns should correspond to cities with one of three specifications:
+												</p>
+												<ol style="list-style-type: decimal">
+													<li>Tropical cities that have very minimal temperature fluctuations throughout the year and are consistently warm and in need of cooling.</li>
+													<li>Cities that have mild climates that are neither in need of cooling nor heating.</li>
+													<li>Polar cities that have very minimal temperature fluctuations throughout the year and are consistently cold and in need of heating</li>
+												</ol>
+												<p>
+													Looking into the data, Singapore is near the equator and, thus, consistently in need of cooling year round with no need for heating. Nairobi has elevation in excess of 1000m and require minimal cooling and heating due to their temperate climates and cool nights (Cohen, Torbey, Piccirilli, Tian, & Modi, 2015). In addition, the other 4 cities all located between -30 degrees to 30 degrees latitude and have little need for heating or cooling. Hence, the relatively flat energy demand profile makes intuitive sense.
+												</p>
+										</div>
+
+										<div id="cluster-3" class="section level4">
+											<h4>Cluster 3</h4>
+												<!--<p>Figure 8 depicts the energy demand profile for cluster 3 cities.</p>-->
+												<p><b>Figure 7: Cluster 3 Normalized Energy Demand Plot Over 1 Year</b>
+													<br />
+													<div id="ClusterViz3">
+														<script type = "text/javascript"src="cluster3.js"></script>
+													</div>
+												</p>
+													<p>
+														Cities in Cluster 3 are: Amman, Chattanooga, Colorado Springs, Kansas City, Louisville, New York, Omaha, Springfield, Tokyo, Detroit, Indianapolis, Philadelphia.
+													</p>
+													<p>In this cluster, the energy demand profile appears to have 2 peaks, one during summer and one during winter. Intuitively, this pattern should correspond with cities some electrical heating during winter and more dominant cooling during summer.</p>
+													<p>All cities in this cluster are located between the 30 and 60 degrees latitude. This supports the hypothesis that both heating and cooling is needed at different times of the year because localities at these lattitudes have distinct seasons.</p></div>
+
+													<div id="cluster-4" class="section level4">
+														<h4>Cluster 4</h4>
+															<!--<p>Figure 9 depicts the energy demand profile for cluster 4 cities.</p>-->
+															<p><b>Figure 8: Cluster 4 Normalized Energy Demand Plot Over 1 Year</b>
+																<br />
+																<div id="ClusterViz4">
+																	<script type = "text/javascript"src="cluster4.js"></script>
+																</div>
+																<br />
+																<i>Note: Energy Demand is normalized by subtracting its mean and dividing the result by its standard deviation over the duration considered.</i>
+															</p>
+															<p>Cities in Cluter 4 are: City of North Little Rock, El Paso, Los Angeles, Memphis, Sacramento, Delhi - BRPL, New South Wales.</p>
+															<p>In this cluster, yearly energy pattern turns out to be “N” style, with the much less pronounced peak in January (boreal winter, austral summer) when compared with Cluster 3 and a peak in August (boreal summer, austral winter). Intuitively, this pattern should correspond with cities of one of two specifications:
+															</p>
+															<ol style="list-style-type: decimal">
+																<li>Cities in the southern hemisphere that have milder summers than those in Cluster 3 such that air-conditioning use is not significant and winters that require some form of heating.</li>
+																<li>Cities in the northern hemisphere that have milder winters than those in Cluster 3 such that heating is not significant and summers that require some form of air-conditioning use.</li>
+															</ol>
+															<p>
+																Geographically, North Little Rock, El Paso, Memphis, Sacramento and Los Angeles are all in the southern and western region of USA. These cities have less harsh winters than those of Cluster 3. Delhi, although located separated from other cities in this group, occupy a similar latitude, and hence, has a similar climate. These cities all correspond to the second specification above. For New South Wales, its energy demand is likely driven by that of its most populated area: Sydney. New South Wales lies in the southern hemisphere and corresponds to the first speciication above.
+															</p>
+															<p>All in all, the clustering results generally correspond to our intuitive understanding of the electrical energy demand profiles of the various cities.</p>
+													</div>
+											</div>			
+					
+					
+			<div id="forecasting-energy-demand" class="section level2">
+				<h2>Forecasting Energy Demand</h2>
+					<div id="methodology2" class="section level3">
+						<h3>Methodology</h3>		
+							<div id="overview-of-energy-demand-data" class="section level4">
+								<h4>Overview of Energy Demand Data</h4>
+									<p>
+										After clustering energy data into four groups, we turn to forecasting. For forecasting, we trim the original dataset to the 30 cities used in the clustering analysis but retain multiple years of energy data for all cities. We also aggregated the half-hourly data to the daily level to remove unnecessary granularity.
+									</p>
+									<p>
+										The energy demand data shows periodicity and can be said to have three components: seasonal, trend, and random component. Seasonality is defined as the tendency of time-series data to exhibit behavior that repeats itself in regular intervals. If the seasonal component is present, it can be additive (where the size of the seasonal component is constant) or multiplicative (where the size of the seasonal component is varies proportionally with the level of the trend). Visual inspection seems to indicate additive seasonablity (see Figure 3). Trend represents the non-cyclical pattern of the data. The random component is the residual after seasonality and trend have been removed. Using R (Version 3.0.2), we applied the <em>decompose()</em> function from the <em>{forecast}</em> package in to a sample city from each of the four clusters and plotted the outcome in Figure 9.
+									</p>
+									<p>
+										<b>Figure 9: Decomposition of Daily Energy Demand of Eugenia, Dakar, Louisville, and Sacramento</b><br /><img src="paper/Fig3.svg" alt="image" width="840"/>
+									</p>
+							</div>
+							<div id="holt-winters-times-series-forecasting-algoritm" class="section level4">
+								<h4>Holt-Winters Times Series Forecasting Algorithm</h4>
+									<p>
+										Holt-Winters (<a href="#cite13">Chatfield &amp; Yar, 1988</a>) is a forecasting method for dealing with time series data with both trend and seasonal components. It is an extension of the Single Exponential Smoothing method. The Holt-Winters method has two versions, additive and multiplicative, the use of which depends on the characteristics of the particular time series. We use the additive method since the seasonality appears to be additive. Holt-Winters predictions are obtained as a weighted average of past observed values where the weights decline exponentially so that the most recent observations contribute to the forecast more than the values of earlier observations. The additive formula of this model is as follow:
+									</p>
+									<p>
+									\[
+\begin{align}
+&amp; s_{i}=\alpha(x_{i}-p_{i-k})+(1-\alpha)(s_{i-1}+t_{i-1}) \\
+&amp; t_{i}=\beta(s_{i}-s_{i-1})+(1-\beta)t_{i-1} \\
+&amp; p_{i}=\gamma(x_{i}-s_{i})+(1-\gamma)p_{i-k} \\
+\end{align}
+\]
+									</p>
+									<p>
+										Here, \(\alpha \) represents the data smoothing factor, \(\beta \) represents thentrend smoothing factor, and \(\gamma \) represents the seasonal change smoothing factor. The values of all three factors are between 0 to 1. K is the time period. \(s_{0} = x_{0}\),  \(t_{0}=x_{1}-x_{0}\).The prediction formula follows:
+									</p>
+									<p>\[
+\begin{align}
+x_{i+h}=s_{i}+ht_{i}+p_{i-k+(h\,mod\,k)}
+\end{align}
+\]
+									</p>
+
+							</div>
+					</div>
+								<div id="results-discussion2" class="section level3">
+									<h3>Results &amp; Discussion</h3>
+																<p>We picked Eugene, Dakar, Louisville, and Sacramento to represent Cluster 1, 2, 3, and 4 respectively. Through application of the Holt-Winters forecasting algorithm, we obtained a model for each of the four cities.
+																Before applying the respective models for out-of-sample forecasting, we tested took a truncated segment of the data to run in-sample forecasts to determine the efficacy of the model. For example, although we have energy data for Eugene from 2006 to the end of 2013, we predicted energy demand for 2013 using the truncated Eugene dataset that has 2006 to end of 2012 data. Comparing between our model results and the actual energy demand data, we quantified the accuracy and perfomance of our model for the four cities using the RMSE. The results are summarized in Table 1. More detailed results are found in Figures 10 to 13.</p>
+
+																<p>We then forecasted a full calendar year of energy data and analyzed the model fit using the Box-Ljung residual test. The results are summarized in Table 2.</p>
+
+																<p><b>Table 1: RMSE on Test Data</b></p>
+																<table>
+																	<thead>
+																		<tr>
+																			<th>City</th>
+																			<th>Cluster</th>
+																			<th>RMSE</th>
+																		</tr>
+																	</thead>
+																	<tbody>
+																		<tr>
+																			<td>Eugene</td>
+																			<td>1</td>
+																			<td>29.55</td>
+																		</tr>
+																		<tr>
+																			<td>Dakare</td>
+																			<td>2</td>
+																			<td>32.37</td>
+																		</tr>
+																		<tr>
+																			<td>Louisville</td>
+																			<td>3</td>
+																			<td>1055.32</td>
+																		</tr>
+																		<tr>
+																			<td>Sacramento</td>
+																			<td>4</td>
+																			<td>199.48</td>
+																		</tr>
+																	</tbody>
+																</table>
+																
+																<p><b>Table 2: Summary of Box-Ljung Test Results</b></p>
+																<table>
+																	<thead>
+																		<tr>
+																			<th>City</th>
+																			<th>Cluster</th>
+																			<th>X-squared</th>
+																			<th>Degree of Freedom</th>
+																			<th>P-value</th>
+																		</tr>
+																	</thead>
+																	<tbody>
+																		<tr>
+																			<td>Eugene</td>
+																			<td>1</td>
+																			<td> 1365.707 </td>
+																			<td>20</td>
+																			<td>2.2e-16</td>
+																		</tr>
+																		<tr>
+																			<td>Dakar</td>
+																			<td>2</td>
+																			<td> 1171.423 </td>
+																			<td>20</td>
+																			<td>2.2e-16</td>
+																		</tr>
+																		<tr>
+																			<td>Louisville</td>
+																			<td>3</td>
+																			<td> 1926.477 </td>
+																			<td>20</td>
+																			<td>2.2e-16</td>
+																		</tr>
+																		<tr>
+																			<td>Sacramento</td>
+																			<td>4</td>
+																			<td> 915.5914 </td>
+																			<td>20</td>
+																			<td>2.2e-16</td>
+																		</tr>
+																	</tbody>
+																</table>
+																<p>
+																	We present the forecasting results of each of the four cities separately, below. The first cluster’s representative, Eugene exhibits the 'U' profile with a distinct upward trend (see Figure 10). From the RMSE in Table 1, of the four cities, the Holt-Winters forecasting model is most effective for Eugene (lowest RMSE).
+																</p>
+																<p>
+																	<b>Figure 10: Holt-Winters Forecast for Eugene (Cluster1)</b>
+																	<br />
+																	<img src="paper/Fig13.svg" alt="image" width = "840"/>
+																	<br />
+																	<i>
+																		Note: Original data spanned 4 calendar years from 2010 to end of 2013. Top left chart depicts comparison between fitted values from the model (red) and original data (black) for the entire dataset is available. Top right chart depicts the comparison between the observed energy demand (black) and the predicted energy demand (red) using the truncated dataset (2010 to end 2012). Bottom left chart depicts the same comparison as the top right chart, albeit as a scatter plot. Bottom right chart depicts the 365-day forecast of daily energy demand of Eugene by applying the model on the full dataset.
+																	</i>
+																</p>	
+																<p>Interact with the data by clicking below:</p>
+																<div id="City1">
+																	<button onclick="runCOne()">
+																		Visualize
+																	</button>
+																	<script type = "text/javascript"src="city1.js"></script>
+																</div>	
+																<br>
+																<p>
+																	The second cluster’s representative, Dakar, has both a general upward trend and a relatively flat profile though a seasonal (cyclical) pattern in the middle of the year can be observed. From the RMSE in Table 1, of the four cities, the Holt-Winters forecasting model is highly effective for Dakar (second lowest RMSE) but not as effective as for Eugene of Cluster 1.
+																</p>
+																<p>
+																	<b>Figure 11: Holt-Winters Forecast for Dakar (Cluster 2)</b>
+																	<br />
+																	<img src="paper/Fig14.svg" alt="image" width="840"/>
+																	<br />
+																	<i>Note: Original data spanned 4 calendar years from 2011 to end of 2014. Top left chart depicts comparison between fitted values from the model (red) and original data (black) for the entire dataset is available. Top right chart depicts the comparison between the observed energy demand (black) and the predicted energy demand (red) using the truncated dataset (2011 to end 2013). Bottom left chart depicts the same comparison as the top right chart, albeit as a scatter plot. Bottom right chart depicts the 365-day forecast of daily energy demand of Eugene by applying the model on the full dataset.</i>
+																</p> 
+																<p>Interact with the data by clicking below:</p>
+																<div id="City2">
+																	<button onclick="runCTwo()">
+																		Visualize
+																	</button>
+																	<script type = "text/javascript"src="city2.js"></script>
+																</div>
+																<br>
+																<p>
+																	The third cluster’s representative, Louisville, has significant periodicity on a yearly basis (see Figure 12). As is the case for cities in Cluster 3, Louisville has two energy demand peaks, a more pronounced peak in the summer and a less pronounced peak in the winter. From the RMSE in Table 1, of the four cities, the Holt-Winters forecasting model is least effective for Louisville (highest RMSE). In fact, the RMSE for Louisville is more than 30 times higher than that of Dakar (Cluster 2) and Eugene (Cluster 1).
+																</p>
+																<p>
+																	<b>Figure 12: Holt-Winters Forecast for Louisville (Cluster 3)</b>
+																	<br />
+																	<img src="paper/Fig15.svg" alt="image" width = "840"/>
+																	<br />
+																	<i>Note: Original data spanned 3 calendar years from 2011 to end of 2013. Top left chart depicts comparison between fitted values from the model (red) and original data (black) for the entire dataset is available. Top right chart depicts the comparison between the observed energy demand (black) and the predicted energy demand (red) using the truncated dataset (2011 to end 2012). Bottom left chart depicts the same comparison as the top right chart, albeit as a scatter plot. Bottom right chart depicts the 365-day forecast of daily energy demand of Eugene by applying the model on the full dataset.</i>
+																</p>
+																<p>Interact with the data by clicking below:</p>
+																<div id="City3">
+																	<button onclick="runCThree()">
+																		Visualize
+																	</button>
+																	<script type = "text/javascript"src="city3.js"></script>
+																</div>	
+																<br>
+																<p>The fourth cluster’s representative, Sacramento, shows a large peak during the boreal summer. Sacramento’s energy demand profile shows a slight downward trend from 2007 to 2013 (see Figure 13). From the RMSE in Table 1, of the four cities, the Holt-Winters forecasting model is much less effective for Sacramento than for Eugene (Cluster 1) and Dakar (Cluster 2). The RMSE for Sacramento is more than 6 times that of Eugene and Dakar.</p>
+																<p>
+																	<b>Figure 13: Holt-Winters Forecast for Sacramento (Cluster 4)</b>
+																	<br />
+																	<img src="paper/Fig16.svg" alt="image" width="840"/>
+																	<br/>
+																	<i>Original data spanned 7 calendar years from 2006 to end of 2013. Top left chart depicts comparison between fitted values from the model (red) and original data (black) for the entire dataset is available. Top right chart depicts the comparison between the observed energy demand (black) and the predicted energy demand (red) using the truncated dataset (2006 to end 2012). Bottom left chart depicts the same comparison as the top right chart, albeit as a scatter plot. Bottom right chart depicts the 365-day forecast of daily energy demand of Eugene by applying the model on the full dataset.
+																	</i>
+																</p>
+																<p>Interact with the data by clicking below:</p>
+																<div id="City4">
+																	<button onclick="runCFour()">
+									   								 Visualize
+									   						  		</button>
+															  	  	<script type = "text/javascript"src="city4.js"></script>
+														  	  	</div>	
+																<br>
+																<p>
+																	We also verified that the forecast errors obtained by deducting the fitted data from the original data are normally distributed (see Figure 14).
+																</p>
+																<p>
+																	<b>Figure 14: Forecast errors</b>
+																	<br />
+																	<img src="paper/Fig17.svg" alt="image" width="840"/>
+																	<br />
+																	<i>Note: Top left: forecast errors for Eugene; top right: forecast errors for Dakar; bottom left: forecast errors for Louisville; bottom right: forecast errors for Sacramento</i>
+																</p>
+					<!--<div id="visualization" class="section level3">
+						<h3>Visualiation</h3>
+							<p>
+								We visualized the data from the above cluster analysis and forecasting steps through a three step procedure using d3 (Bostock, 2013). First, we present a world map centered in the Pacific to depict the cities we considered for this project (see Figure 5). Second, we zoom in to the 4 groups of cities and present their average daily energy demand over a period of 365 days. Each group of cities are visualized in a chart (Figures 6 to 9). Third, we further zoom in to the city level and visualize the energy forecast for one sample city in each of the 4 groups. This is hidden unless the reader decides to interact with the paper by clicking the <em>Visualize</em> button.
+							</p>
+							<p>
+								This cascade of visualizations emphasizes the “drill-down” technique espoused by Schneiderman (1996) in his seminal paper on the visual information seeking mantra. This way, the first visualization provides an overarching overview before the second and third visualization take reader into greater and greater detail. At the same time, we have kept the visualizations minimalist to maximize data-ink and minimize chart-junk (Tufte, 1983).
+							</p>
+					</div>-->
+			</div>
+											<div id="conclusion" class="section level2">
+												<h2>Conclusion</h2>
+													<p>
+														Using energy demand data from 43 localities, we trimmed the data down to 30 localities (28 cities and 2 states) and stratified them into 4 groups based on similarity in the shape of their energy demand curves. We then applied a Holt-Winters time-series algorithm to forecast the energy demand over a period of 365 days for one representative city of each group. We found that the Holt-Winters forecasting method is more effective on cities with Cluster 1 and Cluster 2 type energy profiles. The method is much less effective in cities with Cluster 3 and Cluster 4 type profiles. This has profound implications for energy forecasting. We presented our work using a cascading “drill-down” approach. This approach allows us to first depict an overview of the data before zooming into the granular details, in line with Schneiderman’s visual information seeking mantra. All in all, this paper introduces a data-driven method to group cities based on their energy demand profile to make cross-city collaboration on energy demand management more effective.
+													</p>
+											</div>
+											<div id="references" class="section level2">
+												<h2>References</h2>
+													<p id="cite9">Bostock, M. (2013). Data-driven Documents. Retrieved January 10, 2015, from: <a href="http://d3js.org/">http://d3js.org/</a></p>
+													<p id="cite8">Cohen, Elliot, Vijay Modi, Henri Torbey, Michael Piccirelli and Yu-Tian (2015). Global Trends in Urban Energy Use. Working Paper of the Sustainable Engineering Lab, Columbia University, February 2015. Available online: <a href="http://ecohen4.github.io/Energy/Global_Trends_v4.html">http://ecohen4.github.io/Energy/Global_Trends_v4.html</a></p>
+													<p id="cite13">Chatfield, C., &amp; Yar, M. (1988). Holt-Winters forecasting: some practical issues. <em>The Statistician</em>, 130-140.</p>
+													<p id="cite1">C40. (n.d.). Why Cities? Ending Climate Change Begins in the City. Retrieved May 01, 2015, from: <a href="www.c40.org/ending-climate-change-begins-in-the-city">www.c40.org/ending-climate-change-begins-in-the-city</a></p>
+													<p id="cite5">ICLEI. (n.d.). Who We Are. <em>Local Governments for Sustainability.</em> Retrieved May 01, 2015, from: <a href="http://www.iclei.org/iclei-global/who-is-iclei.html">http://www.iclei.org/iclei-global/who-is-iclei.html</a></p>
+													<p id="cite2">International Energy Agency. (2014). World Energy Outlook 2014 Executive Summary. Retrieved May 01, 2015, from: <a href="http://www.worldenergyoutlook.org/publications/weo-2014/"><a href="http://www.worldenergyoutlook.org/publications/weo-2014/">http://www.worldenergyoutlook.org/publications/weo-2014/</a></a>.</p>
+													<p id="cite14">James, G., Witten, D., &amp; Hastie, T. (2014). An Introduction to Statistical Learning: With Applications in R.</p>
+													<!--<p>Johnson, L. A., &amp; Montgomery, D. C. (1974). Operations research in production planning, scheduling, and inventory control (Vol. 6). <em>New York: Wiley, Chicago.</em></p>-->
+													<p id="cite12">Kaufman, L., &amp; Rousseeuw, P. J. (2009). Finding groups in data: an introduction to cluster analysis (Vol. 344). <em>John Wiley &amp; Sons.</em></p>
+													<p id="cite16">Rhodes, J. D., Cole, W. J., Upshaw, C. R., Edgar, T. F., & Webber, M. E. (2014). Clustering analysis of residential electricity demand profiles. <em>Applied Energy, 135</em>, 461-471. Retrieved May 18, 2015, from: <a href="http://www.sciencedirect.com/science/article/pii/S0306261914009349">http://www.sciencedirect.com/science/article/pii/S0306261914009349</a>
+													<p id="cite10">Shneiderman, B. (1996, September). The eyes have it: A task by data type taxonomy for information visualizations. <em>In Visual Languages, 1996. Proceedings., IEEE Symposium on (pp. 336-343).</em> IEEE. Chicago. Retrieved April 1, 2015, from: <a href="http://drum.lib.umd.edu/bitstream/1903/5784/1/TR_96-66.pdf">http://drum.lib.umd.edu/bitstream/1903/5784/1/TR_96-66.pdf</a></p>
+													<p id="cite3">The New Climate Economy. (2014). Cities: Engines of National and Global Growth. Retrieved April 20, 2015. from: <a href="http://newclimateeconomy.report/cities/">http://newclimateeconomy.report/cities/</a></p>
+													<p id="cite11">Tufte, E. R., &amp; Graves-Morris, P. R. (1983). The visual display of quantitative information (Vol. 2). <em>Cheshire, CT: Graphics press.</em></p>
+													<p id="cite7">Wan, K. K., Li, D. H., Liu, D., & Lam, J. C. (2011). Future trends of building heating and cooling loads and energy consumption in different climates. <em>Building and Environment, 46</em>(1), 223-234. Retrieved May 05, 2015, from: <a href="http://www.sciencedirect.com/science/article/pii/S0360132310002210">http://www.sciencedirect.com/science/article/pii/S0360132310002210</a>
+													<p id="cite4">World Cities Network. (2015). About Us. Retrieved May 10, 2015, from: <a href="http://www.worldcitiesnetwork.org/about-us/">http://www.worldcitiesnetwork.org/about-us/</a></p>
+													<p id="cite6">World Economic Forum. (2012). What lessons can China learn from Singapore. Retrieved May 05, 2015, from: <a href="https://agenda.weforum.org/2012/11/what-lessons-can-china-learn-from-singapore/">https://agenda.weforum.org/2012/11/what-lessons-can-china-learn-from-singapore/</a></p>
+													<p id="cite15">Zaki, M. (2012). Chapter 18: Clustering Validation. <em>Cambridge University Press.</em> Retrieved May 05, 2015, from: <a href="http://www.cs.rpi.edu/~zaki/www-new/uploads/Dmcourse/Main/chap18.pdf">http://www.cs.rpi.edu/~zaki/www-new/uploads/Dmcourse/Main/chap18.pdf</a></p>
+											</div>
+									</div>
+
+									<script>
+									// add bootstrap table styles to pandoc tables
+										$(document).ready(function () {
+  										  	$('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+									  	});
+									</script>
+
+									<!-- dynamically load mathjax for compatibility with self-contained -->
+									<script>
+  								  		(function () {
+    										var script = document.createElement("script");
+    										script.type = "text/javascript";
+    										script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    										document.getElementsByTagName("head")[0].appendChild(script);
+  									  	})();
+									</script>
+		
+	</body>
+</html>
