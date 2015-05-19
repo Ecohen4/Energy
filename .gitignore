@@ -61,5 +61,5 @@ Thumbs.db
 
 # figures #
 ###########
-.png
-.pdf
+*.png
+*.pdf
