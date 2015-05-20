@@ -1,0 +1,35 @@
+body {
+  background-color: #ffffff;
+  font-size: 10px;
+  font-family: 'Helvetica', sans-serif;
+}
+
+p {
+  color: white;
+  margin: 10px;
+}
+
+a {
+  color: #4FDEF2;
+}
+
+.axis {
+  fill: black;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.axis .halo {
+  stroke: #9E5460;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  
+}
+
+.slider .handle path {
+  stroke: #B2B495;
+  stroke-width: 4px;
+  stroke-linecap: round;
+  pointer-events: none;
+}
