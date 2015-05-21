@@ -1,14 +1,15 @@
 ---
 title: "Global Trends in Urban Cooling and Heating"
 author: "Elliot Cohen, Henri Torbey, Michael Piccirilli, Yu Tian, Vijay Modi"
-date: "March 19, 2015"
+date: "May 20, 2015"
 output:
-  html_document:
-    theme: journal
-    toc: yes
   pdf_document:
     toc: yes
     toc_depth: 3
+  html_document:
+    theme: journal
+    toc: yes
+  word_document: default
 ---
 
 ***
@@ -28,13 +29,14 @@ require("gridExtra")
 library("xtable")
 require("rmarkdown")
 require("sm")
+require("pander")
 # require("sparkTable")
 # require("data.table") 
 # require("pander") 
 # require("scatterplot3d")
 
 
-opts_chunk$set(fig.path='Figs/', fig.align="left", echo=FALSE, cache=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+opts_chunk$set(fig.path='Figs/', echo=FALSE, cache=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
 
 options(stringsAsFactors=FALSE)
 ```
@@ -364,6 +366,15 @@ get.tt <- function(x,y){
   data.frame(city=x$city[1], yr=x$yr[1], t.t=round(tt,2))  
 }
 
+
+tableCat <- function(inFrame) {
+    outText <- paste(names(inFrame), collapse = " | ")
+    outText <- c(outText, paste(rep("---", ncol(inFrame)), collapse = " | "))
+    invisible(apply(inFrame, 1, function(inRow) {
+        outText <<- c(outText, paste(inRow, collapse = " | "))
+    }))
+    return(outText)
+}
 ```
 
 ```{r loading data, echo=FALSE}
@@ -388,7 +399,7 @@ hourly$date <- date
 hourly$wday <- wday
 
 # remove Australian states because they are not urban agglomerations (e.g. cities).
-hourly <- hourly[!(hourly$city=="New South Wales" | hourly$city=="Queensland" | hourly$city=="South Australia" | hourly$city=="Victoria" ),]
+hourly <- hourly[!(hourly$city=="New South Wales" | hourly$city=="Queensland" | hourly$city=="South Australia" | hourly$city=="Victoria" | hourly$city=="Kansas City" ),]
 
 # hourly will be filtered to contain only weekdays --> for segmented().
 # hourly1 will contain all the data --> for energy calcs.
@@ -403,7 +414,7 @@ hourly <- hourly[which(hourly$wday==1 | hourly$wday==2 | hourly$wday==3 | hourly
 
 # subset
 colnames(hourly)[6] <- "temperature"
-hourly <- subset(hourly, select=c("city", "yr", "m", "d", "hr", "temperature", "mw", "lat","scaled_mw")) #,"dew.point"
+hourly <- subset(hourly, select=c("city", "yr", "m", "d", "hr", "temperature", "mw", "lat","scaled_mw", "dew.point")) #,"dew.point"
 
 # Omit 0-load values 
 hourly$mw[hourly$mw==0] <- NA
@@ -414,9 +425,12 @@ population <- read.csv("population.csv",header=TRUE)
 
 ## Gradients
 gradients.all.max.yr <- read.csv("gradients.all.max.yr.csv", header=TRUE)
+gradients.all.max.yr <- gradients.all.max.yr[!gradients.all.max.yr$city=="Kansas City", ]
 gradients.all.scaled.max.yr <- read.csv("gradients.all.scaled.max.yr.csv", header=TRUE)
+gradients.all.scaled.max.yr. <- gradients.all.scaled.max.yr[!gradients.all.scaled.max.yr$city=="Kansas City", ]
 # Hourly gradients 
 gradients.hr.yr <- read.csv("gradients.yr.hr.csv",header=TRUE)
+gradients.hr.yr <- gradients.hr.yr[!gradients.hr.yr$city=="Kansas City",]
 
 hourly1.filtered <- ddply(hourly1, .(city, yr), function(x) filter(x, gradients.all.max.yr))
 ```
@@ -430,16 +444,47 @@ levels(as.factor(hourly$city))[get]
 #  We can easily find these values... let's use them!
 ```
 
-## Motivation
-Many of the world's **largest** and **fastest-growing** cities--from Karachi (pop. 14 million; 34.6% increase from 2000-2010) to Delhi (22m; 39.4%), Dhaka (15m, 45.2%), Jakarta (10m; 14.8%), Bangkok (8m, 29.1%), Lagos (11m; 48.2%) and Kinshasa (9m, 55.4%)--are located in South Asia and Sub-Saharan Africa with tropical to sub-tropical climates unlike those of most OECD member cities in the global north. As the tropics/subtropics become increasingly urban, industrial and affluent, it is important to consider how energy demand -- particularly for thermal comfort -- will evolve differently in these places than it has historically across the OECD. 
+## Highlights
+- Per-capita electricity consumption estimated for 36 global cities.
+-	Heating Demand, Cooling Demand and transition temperature between heating and cooling regimes empirically derived. 
+-	Share of total electricity consumption for thermal comfort compared across cities. 
+-	Timing and magnitude of peak demand for thermal comfort cooling estimated for all cities. 
+-	Recent growth in cooling demand observed in emerging market cities. 
 
-To illustrate the potential for vast differences in energy demand for thermal comfort between cities in the global north and cities in the tropics/subtropics, consider Delhi, India. With its massive population, extremely hot summer and extraordinarily hot and humid monsoon season, Delhi is unlike any city in the global north, but typical of South Asia: Peak summer temperatures routinely exceed 40 °C. (104 F.), and intense heatwaves can approach 50 °C. (122 F.). Given the huge temperature differential between outdoor (say 104 F.) and desired indoor air temperature (say 72 F.), and the thermodynamic fact that energy for cooling scales linearly with the temperature differential, cooling a room in Delhi will require twice as much energy as cooling the same room in New York where summer outdoor-indoor temperature differentials are typically half that. 
+## Abbreviations
+
+- A/C, AC: Air Conditionning 
+- CDH: Cooling Degree Hours 
+- CI: Confidence Interval
+- EIA: Energy Information Agency
+- FERC: Federal Energy Regulatory Commission
+- HDH: Heating Degree Hours
+- HVAC: Heating, Ventilation and Air-condition
+- IQR: Inter Quartile Range
+- LDC: Load Duration Curves
+- NCDC: National Climatic Data Center
+- NOAA: National Oceanic and Atmospheric Administration
+- TLC: Temperature-Load Curve
+- Tt: Threshold Temperature 
+- T: Temperature
+
+## Abstract
+As the tropics and subtropics become increasingly urban, industrial and affluent, it is important to consider how energy demand -- particularly for indoor thermal comfort -- will evolve differently in these places than it has historically across the global North. Already, heating, ventilation and air conditioning (HVAC) account for 35% of total primary energy requirements of the United States (Kwok and Rajkovich 2010), and are expected to reach similar proportions in China within 5 years (Wan et. al. 2011). On a per capita basis, developed cities in the OECD (represented in our study by cities in the U.S. and Japan) require 35-90 W/°C (interquartile range) above a comfortable room temperature, while tropical/subtropical cities outside the OECD (mostly in South Asia, Africa and the Middle East) require 2-9 W/°C. The latter is expected to catch up to the former as household incomes rise and adoption of AC accelerates; and someday surpass the former, given higher indoor-outdoor summer temperature differentials.  
+
+## Motivation
+Many of the world's **largest** and **fastest-growing** cities--from Karachi (population 14 million; 34.6% populaiton increase from 2000-2010) to Delhi (22m; 39.4%), Dhaka (15m, 45.2%), Jakarta (10m; 14.8%), Bangkok (8m, 29.1%), Lagos (11m; 48.2%) and Kinshasa (9m, 55.4%)--are located in South Asia and Sub-Saharan Africa with tropical to sub-tropical climates unlike those of most OECD member cities in the global north. As the tropics/subtropics become increasingly urban, industrial and affluent, it is important to consider how energy demand -- particularly for thermal comfort -- will evolve differently in these places than it has historically across the OECD. 
+
+To illustrate the potential for vast differences in energy demand for thermal comfort between cities in the global north and cities in the tropics/subtropics, consider Delhi, India. With its massive population, extremely hot summer and hot-humid monsoon season, Delhi is unlike any city in the global north, but typical of South Asia: Peak summer temperatures routinely exceed 40 °C. (104 F.), and intense heatwaves can approach 50 °C. (122 F.). Given the huge temperature differential between outdoor (say 104 F.) and desired indoor air temperature (say 72 F.), and the thermodynamic fact that energy for cooling scales linearly with the temperature differential, cooling a room in Delhi will require twice as much energy as cooling the same room in New York where summer outdoor-indoor temperature differentials are typically half that. 
 
 In addition to higher temperatures, the cooling season is also much longer: in the past year, Delhi had nearly **six** times as many cooling-degree days as New York City (again assuming a desired indoor air temperature of 72 °F). Compounded by (a) leaky building envelopes in developing world cities (designed for natural ventilation, not air conditioning), (b) intense heat-island effects (typically less green space), and (c) massive population growth -- peak electricity demand in emerging megacities could one day surpass that of their neighbors to the north -- not only in aggregate terms because of their population, but also *per-capita* due to climate, building design and thermodynamics. 
 
-Already, heating, ventilation and air conditioning (HVAC) account for 35% of total primary energy requirements of the United States (Kwok and Rajkovich 2010). In China, buildings accounted for 24.1% of national energy consumption in 1996, 27.5% by 2001, and are projected to increase to 35% by 2020 (Wan et. al. 2011). Globally, buildings consume an estimated 40% of total primary energy (IEA 2015) or 5348 MTOE in 2012; equivalent in wattage to 50 billion human beings working at peak exertion. At the city-scale, HVAC play an even larger role in driving total final energy consumption and related GHG emissions (compared to national and global averages) due to higher population density, building density, heat-island effect, and tendency towards service-economy. 
+Already, heating, ventilation and air conditioning (HVAC) account for 35% of total primary energy requirements of the United States (Kwok and Rajkovich 2010). In China, buildings accounted for 24.1% of total energy consumption in 1996, 27.5% by 2001, and a projected 35% by 2020 (Wan et. al. 2011). Globally, buildings consumed 40% of total primary energy in 2012 (IEA 2015), equivalent to the chemical energy stored in 5348 million tonnes of oil; or the wattage output of 50 billion humans working at peak exertion. 
 
-The incredible amount of energy consumed in buildings today will only continue to rise as global demand for indoor thermal comfort increases. At the root of the issue is one startling statistic from researchers in China: large commercial buildings with full A/C require 10-20 times more energy per-square foot compared to traditional residential buildings (Wan et. al. 2011, Xu et. al. 2013).
+At the city-scale, we expect HVAC to play an even larger role in driving total final energy consumption as compared to national and global averages due to higher population density, heat-island effect, and tendency towards service-economy, which increases the share of air-conditioned commercial real-estate. Researchers in China suggest that large commercial buildings with full A/C require 10-20 times more energy per-square foot compared to  residential buildings (Wan et. al. 2011, Xu et. al. 2013). Given this confluence of events, our goal is to quantify the manitude and timing of peak demand for heating and cooling in rapidly developing cities.
+
+Given our interest in tropical-subtropical cities where heating requirements are minimal to non-existant, we focus on electrical final energy, and do not consider heating fuels. This decision is supported by the fact that subtropical cities with mild heating requirements tend to adopt plug-in electrical space heaters anyway, rather than capital-intensive fuel heating as is common in the U.S., or district steam heating as is common in parts of Europe and Northern China. 
+
+Finally, we are intersted in the effect of heating/cooling on peak-load management from a utility-perspective. To that end, we have collected hourly electricity demand timeseries from 40 electric utilities serving cities or urban agglomerations throughout the world. Roughly half of the cities are located in OECD-member countries, and half in non-OECD nations. 
 
 <Electricity use in buildings alone accounted for a full 18% of global final energy consumption in 2004 (Pérez-Lombard et. at. 2008). Globally, electricity demand is destined to rise further as more developing economies transition from biomass, kerosene, coal and other point-of-use combustion sources to electriciy for heating, cooking and other indoor uses.>
 
@@ -451,7 +496,8 @@ setwd("~/Google Drive/Global_Trends/GTUCH/")
 load("cities.rsav") # population and growth rate data for global cities with pop > 750k
 ```
 
-```{r urbanization_map_current, fig.width=10, fig.height=5}
+```{r urbanization_map_current, fig.width=10, fig.height=5, results='asis'}
+# 
 # base map
 world <- map_data("world")
 worldmap <- ggplot(world, aes(x=long, y=lat, group=group)) +
@@ -474,7 +520,7 @@ ggplot() +
   scale_size(range = c(1, 10))
 ###### End Population and Urbanization Rates ######
 ```
-
+*Figure 1: UN World Urbanization Prospects 2014*
 ```{r urbanization_map_evolution, eval=FALSE}
 # base map
 world <- map_data("world")
@@ -518,27 +564,25 @@ legend("topright", levels(test$region), fill=colfill)
 ### Global Energy Service Provision Parity
 Urbanization, rising incomes, and the income elasticity of energy services in emerging economies will largely determine the trajectory of global energy demand (and associated environmental impacts) over the coming decades (Chaturvedi et. al 2014). As incomes rise, energy demand increases along the extensive margin as more households and businesses purchase energy-consuming assets for the first time (Gertler et al. 2013). As populations rise, energy demand increases further along the extensive margin as the total number of households and businesses increases as well, producing a multiplicative effect (Commoner 1972). 
 
-Along the intensive margin, households and businesses tend to trade-up the energy-intensity ladder: transitioning from fans to window-unit A/C to centralized A/C, from clothesline to spin-dryer to heated-dryer, from two-wheeler to compact car to SUV. Energy intensity may eventually come back down due to efficiency gains, but the process of turning over accumalted capital stock is very long and slow.
+Along the intensive margin, households and businesses tend to trade-up the energy-intensity ladder: transitioning from fans to window-unit A/C to centralized A/C, from clothesline to spin-dryer to heated-dryer, from two-wheeler to compact car to SUV. Energy intensity may eventually come back down due to efficiency gains, but the process of turning over accumulated capital stock is very long and slow.
 
-The current trajectory of economic development in emerging-market cities is towards eventual parity with the OECD (Chaturvedi et. al. 2014). Energy demand will also tend towards parity with the OECD, but in terms of *service provision*, and not simply total per-capita BTU or kWh. Households and businesses do not demand energy _per-se_, but energy services such as thermal comfort (cooling, dehumidification and heating), food storage (refrigeration), food preparation (cooking, boiling, microwaving), cleaning (washing, drying), work productivity (mobile phones and computers), communication (mobile phones and computers), and entertainment (TV, mobile phones and computers). Thus, to even begin to accurately project future energy demand, we must start with a baseline assessment of current demand for energy services. 
+The current trajectory of economic development in emerging-market cities is towards eventual parity with the OECD (Chaturvedi et. al. 2014). Likewise, energy demand will also tend towards parity with the OECD, but in terms of *service provision*, and not simply BTU or kWh. Households and businesses do not demand energy _per-se_, but energy services such as thermal comfort (cooling, dehumidification and heating), food storage (refrigeration), food preparation (cooking, boiling, microwaving), cleaning (washing, drying), work productivity (mobile phones and computers), communication (mobile phones and computers), and entertainment (TV, mobile phones and computers). Thus, to even begin to accurately project future energy demand, we must start with a baseline assessment of current demand for energy services. 
 
-This study aims to address that prerequisite by quantifying current demand for thermal comfort in major emerging cities, and providing benchmark comparison with mature urban economies in the OECD (mostly in the U.S. and Japan). We focus on thermal comfort as compared to other end-use energy services because it is by far the largest driver of electrical peak demand in the residential and commercial sectors (Segal et al. 1992; Crowley et al. 2003; McNeil and Letschert 2007).
-
-The magnitude, timing, ramp-rate and ability to load-shift peak electrical demand will have huge implications on electricity grid planning, including capacity expansion, technology deployment, capital costs, operating costs, consumer prices, supply reliability and environmental impact. More broadly, it will have implications on the global transition to renewable energy given the limitations of meeting large and 'peaky' demand with non-dispatchable resources such as wind and solar.
+This study aims to address that prerequisite by quantifying current demand for thermal comfort in major emerging market cities, and providing benchmark comparison with mature urban economies in the U.S. and Japan. We focus on thermal comfort as compared to other end-use energy services because it is by far the largest driver of peak electrical demand in the residential and commercial sectors (Segal et al. 1992; Crowley et al. 2003; McNeil and Letschert 2007), which in turn dominate the energy footprint of population-dense cities (Kennedy et. al. 2010).
 
 
 ### Drivers of Urban Electricity Demand 
-In developed cities, building energy use accounts for roughly half of all greenhouse gas emissions attributable to that city (review of eight cities in the U.S. by Hillman and Ramaswami 2009). Specifically, electricity and heating fuel use in buildings generate (on average) as much GHG emissions as all surface trasportation, airline travel, upstream fuel processing, food production, cement manufacturing, potable water/wastewater treatment and long-distance freight, combined (e.g. the flow of essential goods and services into and within cities; Hillman and Ramaswami 2009). Of the roughly 50% of urban GHG emissions attributalbe to building energy use, roughly half of that (depending on climate and prevailing architectural design) comes from electricity, with the other half coming from heating and industiral fuels on a life-cycle basis (review of ten international cities by Kennedy et. al. 2010). 
+In developed cities, building energy use accounts for roughly half of all greenhouse gas emissions attributable to that city (review of eight cities in the U.S. by Hillman and Ramaswami 2009). Specifically, electricity and heating fuel use in buildings generate (on average) as much GHG emissions as all surface transportation, airline travel, upstream fuel processing, food production, cement manufacturing, potable water/wastewater treatment and long-distance freight, combined (e.g. the flow of essential goods and services into and within cities; Hillman and Ramaswami 2009). Of the roughly 50% of urban GHG emissions attributable to building energy use, roughly half of that (depending on climate and prevailing architectural design) comes from electricity, with the other half coming from heating and industrial fuels on a life-cycle basis (review of ten international cities by Kennedy et. al. 2010). 
 
 In developing cities, buildings account for a slightly smaller share of city-wide GHG emissions, estimated at 43% for a case study of Delhi, India, using the same system boundaries and methodology as for the aforementioned U.S. cities (Chavez et. al. 2012). 
 
 #### Integrated Assessment Models
 Eom et. al. (2012) identify five structural variables that drive long-term building energy use: (1) population growth, (2) economic growth, (3) urbanization, (4) per-capita floor space, and (5) demand for building energy services. This formulation is supported by Chatturvedi et. al. (2014), van Ruijven et. al. (2011), and serves as the foundation for a building energy sub-routine of the Global Change Assessment Model (GCAM), first developed by Edmonds and Reily (1983), and used widely in a long-lineage of studies since.
 
-GCAM belongs to a class of models known as integrated assessment models, which approximate a web of interactions between endogenous variables given exogenous boundary conditions (Edmonds and Reily 1983). Integrated assessment models such as GCAM are well-suited for high-level, economy-wide scenario analysis (see Wigley and Raper 1992; 2002, for two excellent examples among many).
+GCAM belongs to a class of models known as integrated assessment models, which approximate a web of interactions between endogenous variables given exogenous boundary conditions (Edmonds and Reily 1983). Integrated assessment models such as GCAM are well-suited to high-level, economy-wide scenario analysis (see Wigley and Raper 1992; 2002, for two excellent examples among many).
 
-#### Physical-Based Models
-On the other end of the [urban energy modeling] spectrum are physical-based models that require detailed climatological, meteorlogical and building inventory data. Physical-based models are well-suited to answer specific inquiries regarding near-term energy use at high resolution. They do not attempt to model interactions with the broader economy. There are literally hundreds of such models in the literature, covering a wide range of building typologies and climate zones, and therfore, we only attempt a cursory catalog of salient examples. 
+#### Physical Models
+On the other end of the [urban energy modeling] spectrum are physical models that require detailed climatological, meteorological and building inventory data. Physical models are well-suited to answer specific inquiries regarding near-term energy use at high resolution. They do not attempt to model interactions with the broader economy. There are literally hundreds of such models in the literature, covering a wide range of building typologies and climate zones, and therefore, we only attempt a cursory catalog of salient examples. 
 
 Building energy demand for thermal comfort (in particular) has been evaluated for many regions of the world:
 
@@ -566,45 +610,41 @@ There have also been a large number of studies looking at the effect of climate 
 * Review article (Yao and Hasbi 2013)
 * Review article (Li 2012)
 
-Physical-based models are the gold-standard for simulating energy demand in a specific building or class of buildings. However, our study takes an urban-metabolism approach in which the behavior of the entire city is of interest. Few cities in the world publish full building-stock inventories (including residential, commericial, industrial, government and public buildings such as hospitals, libraries and schools) to reasonably estimate total urban energy demand from the bottom-up. For this reason, we opt for statistical approach (described next) using high-resolution electric utility data. 
+Physical models are the gold-standard for simulating energy demand in a specific building or class of buildings. However, our study takes an urban-metabolism approach in which the behavior of the entire city is of interest. Few cities in the world publish full building-stock inventories (including residential, commercial, industrial, government and public buildings such as hospitals, libraries and schools) sufficient to reasonably estimate total urban energy demand from the bottom-up. For this reason, we opt for a statistical approach (described next) using high-resolution electric utility data. 
 
-### Statistical Models
-A thrid class of urban energy demand models are statistical; including regression, pure time-series, and mixed-method econometric models.
+#### Statistical Models
+A third class of urban energy demand models are statistical; including regression, pure time-series, and mixed-method econometric models. We describe time-series and econometric models briefly for context, and then introduce regression techniques, which serve as the basis for our approach. 
 
-#### Regression Models
-Daily and seasonal variability in urban electricity demand is caused, to a large degree, by demand for cooling and heating, which is driven by meteorological factors (Segal et al.,1992; Thatcher, 2007).
+##### Time-Series and Econometric Models
+Rallapalli and Ghosh (2012) apply a non-stationary time-series model to accurately predict energy demand in all 5 regional power grids of India. Their model out-performs official forecasts of the Central Electricity Authority of India for both in-sample and out-of-sample prediction.
+
+Jung (1993), Fillipini (1999), Tiwali (2000), Fillipini and Pachauri (2004) and World Bank (2008) apply econometric approaches to estimate the income elasticity of electricity demand in Korea, Switzerland, India, India and India, respectively.
+
+Econometric approaches can be catalogued into macro- and micro-level approaches. Macroeconomic approaches employ top-down, national/sub-national summary statistics (e.g. Bose and Shukla 1999; Chaturpuri et a. 2014), whereas microeconomic approaches use bottom-up household survey data to analyze across different heterogeneous sub-groups (e.g. Tiwari 2000; Pachauri 2004; The World Bank 2008). 
+
+##### Regression Models
+Diurnal and seasonal variability in urban electricity demand is driven, in large part, by human response to meteorological factors (Segal et al.,1992; Thatcher, 2007).
 
 Segal et al. (1992) evaluated the relationship between summer peak energy demand in Israel and a host of meteorological parameters. Segal demonstrated that a simple linear model with just a few predictors, namely temperature and humidity, performs as well as more complex models with many additional predictors.
 
 <Crowley et al. (2003) analyzed the role of climate change on electricity demand in both residential and commercial sectors, which are considered to be most sensitive to temperature. Using an observed temperature record, Crowley et al. (2003) estimated average energy demand increases of 3.8% in Pennsylvania, New Jersey and Maryland as a result of recent climate change.><Over what period?><what methods did they use?>
 
-Thatcher (2007) built a complex demand forecast model with over 50 model parameters, but ultimately only require daily max/min temperature and relative humidity as input to estimate electricity demand. Thatcher's model takes daily max/min temperatures to estimate apparent temperature in 30-minute intervals using sine-exponential technique; then applies a modified linear regression model to predict electricity demand. The model is also applied to estimate how Load Duration Curves (LDC) change as a result of a 1 degree increase in the average temperature in Australian state capital cities.
+Thatcher (2007) built a complex demand forecast model with over 50 model parameters, but ultimately only require daily max/min temperature and relative humidity as input to estimate electricity demand. Thatcher's model takes daily max/min temperatures to estimate apparent temperature in 30-minute intervals using sine-exponential technique; then applies a modified linear regression model to predict electricity demand. The model is also applied to estimate how Load Duration Curves (LDC) change as a result of a one degree increase in the average temperature in Australian state capital cities.
 
-All of these studies focus on detailed modeling for a particular mature utility and are therefore hard to generalize to other contexts. Our analysis draws upon consensus findings from the literature (e.g. electricity demand in urban areas is largely a function of temperature) to build our own streamlined urban electricity demand model. The purpose of our model is not precise prediction (we leave that to the electric utilities themselves), but rather a generalized framework that can be applied across multiple, data-sparse cities simultaneously with reasonable accuracy.
+Wan et. al. (2011) estimate baseline and future heating and cooling demand for a generic air-conditioned office building in five Chinese cities representing five distinct climate zones. Their study introduces a clever approach for extracting orthogonal (non-redundant) information from co-linear meteorological data (dry bulb temperature, wet bulb temperature and solar radiation) via Principal Component Analysis, and then applies the first principal component in a regression framework to estimate building heating and cooling loads. Results are benchmarked to a physical-based building energy model as proof-of-concept, with impressive results.
 
-One notable example in this direction (besides our own attemp) is Wan et. al. (2011). Their study is similar in spirit to ours, but differs in methodology. They estimate baseline and future heating and cooling demand for a generic air-conditioned office building in five Chinese cities representing five distinct climate zones. Their study introduces a clever approach for extracting orthogonal (non-redundant) information from colinear meteorological data (dry bulb temperature, wet bulb temperature and solar radiation) via Principal Component Analysis, and then applies the first principal component in a regression framework to estimate building heating and cooling loads. Results are benchmarked to a physical-based building energy model as proof-of-concept. <more on this.>
+Our analysis draws upon consensus findings from the literature (e.g. electricity demand in urban areas is largely a function of temperature) to build our own streamlined urban electricity demand model. The purpose of our model is not precise prediction (we leave that to the electric utilities themselves), but rather a generalized framework that can be applied across multiple, data-sparse cities simultaneously with reasonable accuracy. 
 
-#### Time-Series and Econometric Models
-Rallapalli and Ghosh (2012) apply a non-stationary time-series model to accurately predict energy demand in all 5 regional power grids of India. Their model out-performs official forecasts of the Central Electricity Authority of India for both in-sample and out-of-sample prediction.
-
-Jung (1993), Fillipini (1999), Tiwali (2000), Fillipini and Pachauri (2004) and World Bank (2008) apply econometric approaches to estimate the income elasticity of electricity demand in Korea, Switzerland, India, India and India, respectively.
-
-Econometric approaches can be catalogued into macro- and micro-level approaches. Macroeconomic approaches employ top-down, national/sub-national summary statistics (e.g. Bose and Shukla 1999; Chaturpuri et a. 2014), whereas microeconomic approaches use bottom-up household survey data to analyze across different heterogeneous sub-groups (e.g. Tiwari 2000; Pachauri 2004; The World Bank 2008).  
-
-#### Special Considerations in Tropical and Sub-Tropical Cities
+##### Special Considerations in Tropical and Sub-Tropical Cities
 Pachauri and Spreng (2004) found that urban households in India change their energy consumption patterns with rising incomes. Households consume more energy per capita and move from less clean-burning energy sources such as biomass and kerosene to higher quality energy sources such as electricity and LPG. Both trends points towards higher peak electricity demand and higher integral energy consumption. 
 
-Two excellent studies by the same author (Gupta 2012, 2014) provide insights into the effect of temperature on thermal-comfort seeking behavior in emerging economies. The first, Gupta (2012) adopted a semi-parametric coefficient model that allowed the temperature-electricity relation to vary over time for Delhi. His main findings were that electricity demand is a U-shaped function of temperature and that the cooling demand per unit increase in temperature (MW/°C) is increasing over time. Gupta (2014) applies a similar analysis to 28 Indian states, rather than a single city. Interestingly, Gupta found that the summer electricity demand temperature sensitivity is higher in hotter climate Indian states and conversely, winter electricity demand temperature sensitivity is higher in colder Indian states. He hypothesized that in hotter climates, people have more cooling equipment, and similarly, in colder states people have more heating equipment. He also conjectured that the effect of both hotter and colder weather on electricity demand sensitivity would be more pronounced with higher incomes and GDP/Capita. 
+Two excellent studies by the same author (Gupta 2012, 2014) provide insights into the effect of temperature on thermal-comfort seeking behavior in emerging economies. The first, Gupta (2012) adopted a semi-parametric coefficient model that allowed the temperature-electricity relation to vary over time for Delhi. His main findings were that electricity demand is a U-shaped function of temperature and that the cooling demand per unit increase in temperature (MW/°C) is increasing over time. Gupta (2014) applies a similar analysis to 28 Indian states, rather than a single city. 
 
-This study builds on the work of Gupta (2014) by conducting a global survey of heating and cooling demand, including emerging and developed cities in the US, India, West Africa, and South East Asia.
+Gupta found summer electricity demand temperature sensitivity is higher in hotter Indian states and conversely, winter electricity demand temperature sensitivity is higher in colder Indian states. He hypothesized that in hotter climates, people have more cooling equipment, and similarly, in colder states people have more heating equipment. He also conjectured that the effect of both hotter and colder weather on electricity demand sensitivity would be more pronounced with higher incomes and GDP/Capita. 
 
+This study builds on the work of Gupta (2014) by conducting a global survey of electrical heating and cooling demand, including emerging and developed cities in the US, India, West Africa, and South Asia.
 
-#### Quantitative Comparison with Previous Studies
-Several previous studies have examined urban energy requirements for heating and cooling. Most relevant, Chaturvedi et. al. (2014) estimate building energy demand for India out to 2095. Chaturvedi et. al. (2014) take a top-down approach, applying national-average data on residential-commercial asset ownership and building square-footage coupled with a building energy service model from Eom et. al. (2012) and the Global Change Assessment Model (GCAM; Edmonds et. al. 1997). They wisely model urban buildings and rural buildings seperately, given divergent baseline conditions and trajectories. Broadly, Chaturvedi et. al. (2014) highlight the same themes as us: rapid urbanization in developing economies and the paramount importance of quantifying demand for energy services in those places. However, our specific findings for urban India differ substantially, as detailed in the discussion section.
-
-Next, we compare our city-specifc results for Delhi and Chanidargh (India) with all-India urban averages from Chaturvedi et. al. (2014). We estimate per-capita electricity consumption for cooling to be 370 kWh/(capita x year) for NCT Delhi (see Result 6)[^1]. By comparison, applying values reported in Chaturvedi et. al. (2014) for all-India urban household energy consumption for cooling, and scaling by the number of households in Delhi (Chavez et al. 2012) and the average number of people per household (Delhi Statistical Abstract 2012), their estimate is equivalent to 36 kWh/(capita x year) -- an order of magnitude smaller than our empirical estimate.
-
-Similarly, applying Chaturvedi et. al. (2014) estimates (see Table 3), the average cooling load in Delhi would be equivalent to approximately 423 MW. We estimate peak demand for cooling at 5359 MW. By our estimation, Chaturvedi (2014) may be underestimating building-energy demand for cooling in Indian cities by an order of magnitude.  It should be noted that our estimate is for peak cooling demand, and Chaturvedi (2014) is for average cooling demand. However, the magnitude of difference is still far larger than attributable to this alone. Assuming an average cooling day in Delhi is just 10 °C above a 21 °C threshold temperature, that would still yield a cooling demand of approximately 1300 MW (see result 1).
+The magnitude, timing, ramp-rate and ability to load-shift peak electrical demand will have huge implications on electricity grid planning -- including capacity expansion, technology deployment, capital costs, operating costs, consumer prices, supply reliability and environmental impact. More broadly, it will have implications on the global transition to renewable energy given the limitations of meeting large and 'peaky' demand (attributable to thermal comfort seeking behavior) with non-dispatchable resources such as wind and solar.
 
 ## Objectives
 Energy demand projections abound, but are often saddled with excessive complexity (Bhattacharyya and Timilsina 2009). Complexity translates to proliferation of estimated model parameters, which in turn compounds uncertainty, limits degrees of freedom, diminishes generalizability and obfuscates interpretability. 
@@ -626,32 +666,46 @@ The objective of this study is to answer four key research questions:
 ## Data
 At present, there is scant baseline information publically-available on urban electricity demand for a cross-section of global cities. This article aims to fill that gap. In addition to the tables, figures and analysis reported here, all of the underlying data is curated and made freely available (with citation) on [github](https://github.com/Ecohen4/Energy). We encourage fellow researchers to [fork](https://help.github.com/articles/fork-a-repo/) the repository and contribute new data via [pull request](https://help.github.com/articles/using-pull-requests/). 
 
-This study combines high resolution (hourly) electricity demand and meteorological data with annual census information for 40 global cities.
+This study combines high resolution (hourly) electricity demand and meteorological data with annual census information for 39 global cities.
 
 The starting point for identifying major emerging cities was the UN World Urbanization Prospects (2014), subset to the 100 fastest growing cities with more than 2M inhabitants. For comparison, data for US cities was collected from the Federal Energy Regulatory Commission and the US Energy Information Administration. 
 
+*Table 1: Data sources summary table*
 
-| City           | Country             | Load          | Weather       | Population    |
-|----------------|---------------------|---------------|---------------|---------------|                     
-| Abidjan        | Cote d'Ivoire       | 2010-2013 (a) | 2010-2013 (m) | 1990-2030 (n) |
-| Accra          | Ghana               | 2013-2014 (b) | 2010-2013 (m) | 1990-2030 (n) |
-| Amman          | Jordan              | 2011-2014 (c) | 2010-2013 (m) | 1990-2030 (n) |
-| Antigua        | Antigua and Barbuda | 2011-2011 (d) | 2010-2013 (m) |     -         | 
-| Beirut         | Lebanon             | 2011-2014 (e) | 2010-2013 (m) | 1990-2030 (n) |
-| Chandigarh     | India               | 2011-2013 (d) | 2010-2013 (m) | 1990-2030 (n) |
-| Dakar          | Senegal             | 2011-2014 (f) | 2010-2013 (m) | 1990-2030 (n) |
-| Delhi          | India               | 2012-2013 (e) | 2010-2013 (m) | 1990-2030 (n) |
-| Kano           | Nigeria             |    2014   (d) |    2014   (m) | 1990-2030 (n) |
-| Kupang         | Indonesia           |    2013   (d) |    2013   (m) |    2011   (p) |
-| Manila City    | Philippine          | 2011-2013 (g) | 2010-2013 (m) | 1990-2030 (n) |
-| Mbabane        | Swaziland           | 2012-2014 (h) | 2010-2013 (m) |    2010   (p) |
-| Nairobi        | Kenya               | 2011-2013 (i) | 2010-2013 (m) | 1990-2030 (n) |
-| New York City  | U.S.                | 2007-2012 (d) | 2007-2012 (m) | 2007-2012 (q) |
-| Philadelphia   | U.S.                | 2009-2011 (r) | 2009-2011 (m) | 1990-2030 (n) |
-| Singapore      | Singapore           | 2013-2013 (j) | 2010-2013 (m) | 1990-2030 (n) |
-| Tema           | Ghana               | 2012-2013 (b) | 2010-2013 (m) |     -         |
-| Tokyo          | Japan               | 2008-2014 (k) | 2010-2013 (m) | 1990-2030 (n) |
-| U.S. cities    | U.S.                | 2006-2013 (l) | 2010-2013 (m) | 2001-2013 (o) |
+| City              | Country             | Load          | Weather       | Population    |
+|-------------------|---------------------|---------------|---------------|---------------|                     
+| Abidjan           | Cote d'Ivoire       | 2010-2013 (a) | 2010-2013 (m) | 1990-2030 (n) |
+| Accra             | Ghana               | 2013-2014 (b) | 2010-2013 (m) | 1990-2030 (n) |
+| Amman             | Jordan              | 2011-2014 (c) | 2010-2013 (m) | 1990-2030 (n) |
+| Antigua           | Antigua and Barbuda | 2011-2011 (d) | 2010-2013 (m) |     -         | 
+| Beirut            | Lebanon             | 2011-2014 (e) | 2010-2013 (m) | 1990-2030 (n) |
+| Chandigarh        | India               | 2011-2013 (d) | 2010-2013 (m) | 1990-2030 (n) |
+| Chattanooga       | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Colorado Springs  | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Dakar             | Senegal             | 2011-2014 (f) | 2010-2013 (m) | 1990-2030 (n) |
+| Delhi             | India               | 2012-2013 (e) | 2010-2013 (m) | 1990-2030 (n) |
+| Detroit           | U.S.                | 2006-2008 (s) | 2006-2008 (m) | 2006-2008 (t) |
+| El Paso           | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Eugene            | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Honolulu          | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Inidanapolis      | U.S.                | 2006-2008 (s) | 2006-2008 (m) | 2006-2008 (t) |
+| Kano              | Nigeria             |    2014   (d) |    2014   (m) | 1990-2030 (n) |
+| Kupang            | Indonesia           |    2013   (d) |    2013   (m) |    2011   (p) |
+| Los Angeles       | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Manila City       | Philippine          | 2011-2013 (g) | 2010-2013 (m) | 2010-2015 (o) |
+| Mbabane           | Swaziland           | 2012-2014 (h) | 2010-2013 (m) |    2010   (p) |
+| Nairobi           | Kenya               | 2011-2013 (i) | 2010-2013 (m) | 1990-2030 (n) |
+| New York City     | U.S.                | 2007-2012 (d) | 2007-2012 (m) | 2007-2012 (q) |
+| North Little Rock | U.S.                | 2010-2013 (s) | 2010-2013 (m) | 2010-2013 (t) |
+| Omaha             | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Philadelphia      | U.S.                | 2009-2011 (r) | 2009-2011 (m) | 1990-2030 (n) |
+| Sacramento        | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| San Diego         | U.S.                | 2012-2013 (s) | 2012-2013 (m) | 2012-2013 (t) |
+| Singapore         | Singapore           | 2013-2013 (j) | 2010-2013 (m) | 1990-2030 (n) |
+| Springfield       | U.S.                | 2011-2013 (s) | 2011-2013 (m) | 2011-2013 (t) |
+| Tacoma            | U.S.                | 2006-2013 (s) | 2006-2013 (m) | 2006-2013 (t) |
+| Tema              | Ghana               |   2014 (b)    |   2014 (m)    |     2013  (v) |
+| Tokyo             | Japan               | 2008-2014 (k) | 2010-2013 (m) | 2008-2014 (u) |
 
 (a): Autorite Nationale de Regulation du Secteur de l'Electricite 
 (b): Ghana Grid Company 
@@ -667,10 +721,14 @@ The starting point for identifying major emerging cities was the UN World Urbani
 (l): FERC & EIA
 (m): National Oceanic and Atmospheric Administration
 (n): United Nations World Urbanization Porspects - 2014
-(o): US Bureau of Economic Analysis
+(o): National Statistical Coordination Board - Philippine Statistics Authority
 (p): UN Data
 (q): US Census Bureau
 (r): PJM
+(s): Federal Electricity Regulatory Commission - form 714 (FERC)
+(t): Energy Information Administration - form 826 (EIA)
+(u): Email correspondence with Tokyo Electric Power Company (TEPCO)
+(v): Wikipedia
 
 #### Weather Data
 High-resolution weather data are indispensable to accurate energy demand forecasts (Segal et al. 1992; Sailor 2001; Crowley et al. 2003; Thatcher 2007). Fortunately, national weather services and climate information centers such as the U.S. National Oceanic and Atmospheric Administration (NOAA), Britain's Met Office, and India's Institute for Tropical Meteorology (IITM), collect, curate, analyze and publish meteorological data from thousands of weather stations worldwide. 
@@ -689,8 +747,7 @@ Briefly, weather data was collected as follows:
 Applying the functions of the weatheR library to the cities and years for which load data was collected, hourly temperature time-series were obtained. The below boxplot shows the temperature distributions for these cities. 
 
 ```{r ,fig.width=7, fig.height=7, echo=FALSE}
-
-wx.stats <- hourly[,c("city","temperature")] #, "dew.point"
+wx.stats <- hourly[,c("city","temperature","dew.point")] #, "dew.point"
 wx.stats <- melt(wx.stats, id.vars="city")
 cities <- c("Delhi - BRPL", "Delhi - BYPL", "Delhi - NDPL", "Delhi - MES", "Delhi - NDMC")
 wx.stats <- wx.stats[!wx.stats$city %in% cities,]
@@ -699,9 +756,11 @@ ggplot(aes(y = value, x = city, fill = variable), data = wx.stats) +
   geom_boxplot( outlier.size = 0) +
   coord_flip() + 
   labs(y="Temperature [°C]", x="City") +
-  theme_minimal()
+  theme_minimal() #+ theme(legend.position="none")
 
+hourly <- hourly[,c(1:9)]
 ```
+*Figure 2: Barplots of the collected weather data*
 
 #### Demand Data
 Hourly electricity demand data was collected from utility companies, system operators or electricity regulatory bodies serving the cities of interest. Data was collected for the past 3 years, if possible.
@@ -712,13 +771,32 @@ Data for Beirut, Lebanon and Amman, Jordan were estimated from national data. Th
 
 The Lebanese utility EDL provided ratios of 15% from 8am to 12am, and 22% from 12am to 8am for Beirut. Comparing the two cities, which are less than 150 miles apart as the crow flies, yields surprisingly low per-capita consumption for Beirut (XX/kWh/capita/yr) compared to Amman (XX Kw/capita/yr). However, the allocation ratios, and thus the per-capita estimates, makes sense when you consider that there are several major cities in Lebanon (Beirut, Zahle, Tripoli and Saida), whereas Jordan has only Amman. Therefore, despite the similarity in electricity demand between Jordan and Lebanon at the national-scale, applying utility-supplied ratios yields significantly higher per-capita demand for Amman compared to Beirut. 
 
-Data for Abidjan, Ivory Coast and Dakar, Senegal were estimated from country level loads by the utilities themselves. Monthly ratios of peaks at city-level feeders to peaks at grid-level were applied. 
+Data for Abidjan, Ivory Coast and Dakar, Senegal were estimated from country level loads by the utilities themselves: Monthly ratios of peaks at city-level feeders to peaks at grid-level were applied. 
 
+Data for Philadelphia includes the surrounding areas and not only the city itsels, as opposed to the data for New York City. 
+
+Data for Manila includes the whole Luzon islands.
 
 
 #### Population Data
-Population data was collected from the UN World Urbanization Prospects (2014) and from the US Bureau of Economic Analysis. It is used to normalize energy demand and consumption to a per capita level, as per the *Methods* section. 
+Population data was collected from many sources as per the summary table at the top of the *Data* section. They are used to normalize energy demand and consumption to a per capita level as per the *Methods* section. 
 
+The population data collected for some U.S. cities from EIA were in the form of "residential customer count". They were therefore multiplied by the U.S. average number of persons per household (estimated to be 2.63 by the U.S. Census Bureau) to obtain a population service count. 
+
+For these cities, the collected load data from FERC were related to the corresponding EIA customer count by merging the FERC 714 form with the EIA 826 form. The following table illustrates this: 
+
+*Table 2: US Utilities data sources*
+```{r eia-ferc-summary ,echo=FALSE,results='asis'}
+eia.ferc <- read.csv("ferc_eia_merge.csv",header=TRUE)
+eia.ferc <- eia.ferc[,c(1,4,3,5)]
+eia.ferc <- eia.ferc[!eia.ferc$City=="Kansas City",]
+colnames(eia.ferc) <- c("City","Utlity Name","EIA Code", "FERC Respondent ID")
+kable(eia.ferc)
+```
+
+Note: EIA reports customer count for City of North Little Rock for the year 2014 only. This number was thus assumed to be the same for the years 2010 to 2013. 
+
+Tema (Ghana) population was only found for the year 2013. We therefore assumed it stayed constant in the year 2014. 
 
 ## Methods
 
@@ -729,13 +807,13 @@ Two main analyses are performed on the set of city-year data, described above. T
 For every city/year combination, Cooling Degree Hours is defined as the sum at every hour of the difference between the recorded temperature and a certain 'comfortable' temperature at which no cooling nor heating is required. If this difference is negative, it is taken as 0, as per the below formula: 
 
 $$
-{CDH} = \sum_{hour=1}^{8760} max\left \{ T_{observed,hour} - T_{threshold}, 0 \right \}
+{(1) CDH} = \sum_{hour=1}^{8760} max\left \{ T_{observed,hour} - T_{threshold}, 0 \right \}
 $$
 
 In a similar way, Heating Degree Hours is defined as the sum at every hour of the difference between a certain 'comfortable' temperature and the observed temperature at that hour. If this difference is negative, it is taken as 0:
 
 $$
-{HDH} = \sum_{hour=1}^{8760} max\left \{ T_{threshold} - T_{observed,hour}, 0 \right \}
+{(2) HDH} = \sum_{hour=1}^{8760} max\left \{ T_{threshold} - T_{observed,hour}, 0 \right \}
 $$
 
 In other words, CDH and HDH represent the number of degrees per year that require respectively cooling and heating to reach the degree of thermal-comfort set by the 'comfortable' temperate. This temperature is usually set at 20 °C, however the subsequent sections will derive a threshold temperature that is specific for the city-year considered. 
@@ -749,13 +827,13 @@ Iterative testing has shown that to obtain a solid profile suitable for a regres
 
 Economic activity is typically lower on weekends compared to weekdays, and electricity demand is commensurately lower. To remove this noise, which is unrelated to temperature, weekends were omitted. 
 
-Plotting the energy demand against temperature gives the Temperature-Load Curve (TLC). Depending on the climate and prevalence of heating and cooling appliances, the strength of the temperature-load profile will vary. Cities with distinct heating and cooling seasons (such as New York City, latitude = 40.65°, figure XX) will have a V shaped TLC. The right side of the curve represents the cooling regime: as temperatures increase, demand for electricity increases because of cooling requirements. The cooling regime, and therefore the city's sensitivity to high temperatures is characterized by a positive coefficient called the cooling coefficient. The left side of the curve represents the heating regime: as temperatures increase, demand for electricity increases because of heating requirements. It should be noted that in many cities, heating requirements are met predominately by natural gas or heating oil, and not electricity, although some electrical heating exists as well. Because our study focuses on electricity only, and no other fuels, our estimates of integral energy consumption for electrical heating  will certainly be underestimates of total heating energy in a city. 
+Plotting the energy demand against temperature gives the Temperature-Load Curve (TLC). Depending on the climate and prevalence of heating and cooling appliances, the strength of the temperature-load profile will vary. Cities with distinct heating and cooling seasons (such as New York City, latitude = 40.65°, figure 3) will have a V shaped TLC. The right side of the curve represents the cooling regime: as temperatures increase, demand for electricity increases because of cooling requirements. The cooling regime, and therefore the city's sensitivity to high temperatures is characterized by a positive coefficient called the cooling coefficient. The left side of the curve represents the heating regime: as temperatures increase, demand for electricity increases because of heating requirements. It should be noted that in many cities, heating requirements are met predominately by natural gas or heating oil, and not electricity, although some electrical heating exists as well. Because our study focuses on electricity only, and no other fuels, our estimates of integral energy consumption for electrical heating  will certainly be underestimates of total heating energy in a city. 
 
 The city's sensitivity for cold temperatures is characterized by a negative coefficient called the Heating Coefficient, which tends to be lower in absolute terms than the Cooling Coefficient for the reason stated above. The temperature that separates the cooling and the heating regime is called the Threshold Temperature. It is the transition between heating and cooling regimes. In other words, it is the observed 'comfortable' temperature above which people start cooling and under which people start heating. 
 
-By contrast, cities in the tropics and sub-tropics tend to have cooling but no significant heating. For example, Dakar Senegal (latitude = 14.7°) has a distinct cooling seasons as can be seen from the TLC (figure XX). 
+By contrast, cities in the tropics and sub-tropics tend to have cooling but no significant heating. For example, Dakar Senegal (latitude = 14.7°) has a distinct cooling seasons as can be seen from the TLC (figure 3). 
 
-A third category is cities located in temperate climates with little to no cooling and heating infrastructure and thus no strong relationship between temperature and load. The TLC for these cities will lack a definite Threshold Temperature and the slope of the regression will not be significantly different than zero. As we will see in the result section, several cities have very recently transitioned from non-significant to significant Heating & Cooling, which indicates increased penetration of thermal-comfort appliances (see figures XX). 
+A third category is cities located in temperate climates with little to no cooling and heating infrastructure and thus no strong relationship between temperature and load. The TLC for these cities will lack a definite Threshold Temperature and the slope of the regression will not be significantly different than zero. As we will see in the result section, several cities have very recently transitioned from non-significant to significant Heating & Cooling, which indicates increased penetration of thermal-comfort appliances (see figures 5). 
 
 ```{r,fig.width=10, fig.height=5,echo=FALSE, eval=FALSE}
 nyc <- hourly[which(hourly$city=="New York City" & hourly$yr==2012),]
@@ -770,13 +848,12 @@ print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 ```
 
-
 ### Cooling/Heating Power Demand 
 
 This section aims to quantify the TLC for a set of global cities. Cities are divided in two groups: Heating *&* Cooling, and Heating *or* Cooling. For cities for heating or cooling only, a sample linear regression is used to model load as a function of temperature. For cities with heating and cooling, a segmented linear regression is performed where in two linear models (one for cooling, one for heating) are iteratively estimated to minimize the total sum of square root errors. The intercept (Beta0) and Beta coefficients (Beta1) for the two linear models are estimated simultaneously by ordinary least squares given an initial condition of the breakpoint between the two linear regressions. In physical terms, the breakpoint is the threshold temperature (or transition temperature) between heating and cooling seasons. For each city, the initial condition was set equal to the mean temperature observed in that city. 
 Since a large number of city-year combinations are considered in this study, we developed R functions to automate the process. For every city-year combination, the first step of the algorithm is to compute the IQR (difference between the 75th percentile and the 25th percentile) of the temperature distribution. Empirically, we found that for cities with distinct heating and cooling seasons the IQR was higher than 6.8 and that cities with heating or cooling have a temperature IQR less than 6.8. 
 
-Figure XX (below) shows the resulting linear regression fit for NYC and Dakar respectively. The coefficients (Heating and/or Cooling), their significance and the x-coordinate of the break-point (threshold temperature) are extracted and saved for every city at every year. This is done for all cities at daily peak load observations. 
+Figure 3 (below) shows the resulting linear regression fit for NYC and Dakar respectively. The coefficients (Heating and/or Cooling), their significance and the x-coordinate of the break-point (threshold temperature) are extracted and saved for every city at every year. This is done for all cities at daily peak load observations. 
 
 ```{r,echo=FALSE, fig.width=10, fig.height=5, message=FALSE, warning=FALSE}
 nyc <- hourly[which(hourly$city=="New York City" & hourly$yr==2012),]
@@ -797,21 +874,24 @@ q <- plot(dakar$temperature,dakar$mw, main="Linear regression for Dakar", xlab="
 # print(t, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 # print(q, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 ```
+*Figure 3: TLCs and regression models for New York City and Dakar, 2012*
 
 This process is repeated for every hour of the day for each city-year combination, that is, fit a linear/segmented regression model to all the weekday/weekend midnight, 1ams, 2ams, etc. resulting in 24 TLCs for each city-year combination. This will be used in the next section to estimate integral energy consumption for heating and cooling. 
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE, fig.width=10, fig.height=10}
+To illustrate this, we show the TLC (figure 4) for New York City in 2012 at midnight, 6am, 12pm and 6pm. Note the change in slope in cooling and heating demand depending on time of day. 
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE, fig.width=10, fig.height=3}
 nyc <- hourly[(hourly$city=="New York City" & hourly$yr==2012),]
 cc.list.yr <- dlply(nyc, .(city,yr,hr), function(x) getSeg.hr(x))
 
 hourly.plot <- nyc
 hourly.plot$hr <- as.factor(hourly.plot$hr)
 
-par(mfrow=c(6,4))
+par(mfrow=c(1,4))
 par(oma=c(0,0,0,0))
-par(mar=c(2,2,2,2)) #5,4,4,2
-for (i in 1:length(levels(hourly.plot$hr))){  
-  plot(hourly.plot$temperature[which(hourly.plot$hr==levels(hourly.plot$hr)[i])],hourly.plot$mw[which(hourly.plot$hr==levels(hourly.plot$hr)[i])], xlab="Temperature", ylab="MW", main=paste("NYC 2012, hour=",levels(hourly.plot$hr)[i],sep=""), ann=FALSE)
+# par(mar=c(2,2,2,2)) #5,4,4,2
+for (i in c(1,7,13,19)){  #1:length(levels(hourly.plot$hr
+  plot(hourly.plot$temperature[which(hourly.plot$hr==levels(hourly.plot$hr)[i])],hourly.plot$mw[which(hourly.plot$hr==levels(hourly.plot$hr)[i])], xlab="Temperature", ylab="MW", main=paste("NYC 2012, hour=",levels(hourly.plot$hr)[i],sep=""))
   if ((class(cc.list.yr[[i]])[[1]])[1]=="segmented"){
     plot(cc.list.yr[[i]], add=TRUE, res=FALSE, link=TRUE, col="green", size=6)
     } else if ((class(cc.list.yr[[i]])[[1]])[1]=="lm") {
@@ -821,6 +901,7 @@ for (i in 1:length(levels(hourly.plot$hr))){
     }
 }
 ```
+*Figure 4: TLCs and regression models for New York City 2012 at midnight, 6am, 12pm and 6pm*
 
 The coefficients (heating and/or cooling) obtained at every hour for every city-year combination are a measure of demand for thermal-comfort seeking, that is how much power is required to keep residents in city comfortable. Coefficients are expressed in MW/°C and therefore represent the incremental change in load for every 1°C change in threshold temperatures. In subsequent sections, the Cooling Coefficient will be referred to as the Cooling Demand and the Heating Coefficient as the Heating Demand. 
 
@@ -829,11 +910,11 @@ The coefficients (heating and/or cooling) obtained at every hour for every city-
 After estimating the characteristic energy demand for cooling and heating at each hour of the day (0-23) for each year from the TLC, we can reconstruct integral energy consumption for thermal-comfort by multiplying energy demand per °C by the degree hours (equations 1 and 2). Before computing integral energy consumption, a data filter was applied to select city-year combinations containing the equivalent of at least 350 days of hourly observations. 350 days was chosen instead of 365 days to allow a modest tolerance for missing data (a maximum of 2 weeks of equivalent hourly observations).
 
 $$
-{(1) Cooling Energy_{city,yr}} = \sum_{hour=1}^{8760} max\left \{ Cooling Demand_{city,yr,hr}*(T_{observed,city,yr,hr} - T_{threshold,city,yr,hr}), 0 \right \}
+{(3) Cooling Energy_{city,yr}} = \sum_{hour=1}^{8760} max\left \{ Cooling Demand_{city,yr,hr}*(T_{observed,city,yr,hr} - T_{threshold,city,yr,hr}), 0 \right \}
 $$
 
 $$
-{(2) Heating Energy_{city,yr}} = \sum_{hour=1}^{8760} max\left \{ Heating Demand_{city,yr,hr}*(T_{threshold,city,yr,hr}-T_{observed,city,yr,hr}), 0 \right \}
+{(4) Heating Energy_{city,yr}} = \sum_{hour=1}^{8760} max\left \{ Heating Demand_{city,yr,hr}*(T_{threshold,city,yr,hr}-T_{observed,city,yr,hr}), 0 \right \}
 $$
 
 Two important points must be noted concerning the above two equations. First,for any city-year-hour combination, if the Cooling Demand or Heating Demand is not significant at the 90% confidence interval, it is set to 0. Second, for cities with only heating or cooling, or no relationship at all, the threshold temperature is taken as the 5th percentile of the temperature distribution to avoid outliers. 
@@ -849,19 +930,19 @@ test1 <- ddply(test, .(city, yr), summarize, consumption.gwh=round(sum(mw)/1000,
 The following section presents results and discussion for each of four stated research objectives. Taken together, our results represent the first comparative analysis of electrical heating and cooling demand at the city-scale, including both OECD and non-OECD member cities.  
 
 ### Cooling
-A significant cooling signal was detected (90% confidence level) for 35 of 37 cities analyzed. The only cities without a clear cooling signal were Mbabane, Swaziland (elev. 1243m, lat. -26°, long. 31.3°) and Nairobi, Kenya (elev. 1661m , lat -1.3°, long. 36.8°). Both cities are at high elevation, with temperate climates and cool nights, suggesting that electrical cooling is unnecessary much of the year, and thus adoption of capital-intensive A/C is commensurately low. By comparison, Abidjan, Cote d'Ivoire had no detectable cooling signal as recently as 2010, but now has a highly significant (99% CI) cooling demand of approximately 3 Watts/(capita x °C), suggesting very recent uptake of cooling appliances. 
+A significant cooling signal was detected (90% confidence level) for 34 of 36 cities analyzed. The only cities without a clear cooling signal were Mbabane, Swaziland (elev. 1243m, lat. -26°, long. 31.3°) and Nairobi, Kenya (elev. 1661m , lat -1.3°, long. 36.8°). Both cities are at high elevation, with mild climates and cool nights, suggesting that electrical cooling is unnecessary much of the year, and thus adoption of capital-intensive A/C is commensurately low. By comparison, Abidjan, Cote d'Ivoire had no detectable cooling signal as recently as 2010, but now has a highly significant (99% CI) cooling demand of approximately 3 Watts/(capita x °C), suggesting very recent uptake of cooling appliances. 
 
-In Accra, Ghana, both the effect of temperature on electricity demand, and the significance of that effect are increasing year-on-year. Virtually across the board among non-OECD cities, this holds true: cooling demand, both city-wide and per-capita, are higher now (most recent year data is available) than even just a few years ago (first year data is available). The overall trend is positive, but not strictly monotonic, for Abidjan, Cote d'Ivoire; Accra, Ghana; Chandigarh, India; Dakar, Senegal; and Manila, Philippines; see Table 2 (city-wide) and Table 3 (per-capita). 
+In Accra, Ghana, both the effect of temperature on electricity demand, and the significance of that effect are increasing year-on-year. Virtually across the board[^2] among non-OECD cities, this holds true: cooling demand, both city-wide and per-capita, are higher now (most recent year data is available) than even just a few years ago (first year data is available). The trend holds true (increasing, but not strictly monotonic) for Abidjan, Cote d'Ivoire; Accra, Ghana; Amman, Jordan; Chandigarh, India; Dakar, Senegal; and Manila, Philippines; see Table 3 (city-wide) and Table 4 (per-capita). Figure 5 illustrates this phenomena for Abidjan, Dakar and Manila. It shows daily peak demand increasing year-on-year, and its relationship to temperature intensifying.
 
-This suggests significant, latent, unmet demand for indoor thermal comfort services in emerging market cities. As incomes continue to rise, so will penetration of vapor-compression refrigeration window-units (e.g. A/C) and resistive electrical heaters in the near term, and central heating/cooling and reversible heatpumps in the mid- to long-term. Energy demand for cooling, dehumidification and heating will rise accordingly. How high it will ultimately go, is a central question of this research. 
+Figure 5 suggests significant, latent, unmet demand for indoor thermal comfort services in emerging market cities. As incomes continue to rise, so will penetration of vapor-compression refrigeration window-units (e.g. A/C) and resistive electrical heaters in the near term, and central heating/cooling and reversible heatpumps in the long-term. Energy demand for cooling, dehumidification and heating will rise accordingly. How high it will ultimately go, is a central question of this research. As an upper-estimate, we can presuppose that demand for thermal comfort services will reach eventual parity with OECD cities of similar climate on a Watt/(°C x capita) basis.
 
-As an upper-estimate, we can presuppose that demand for heating and cooling will reach eventual parity with OECD cities of similar climate on a Watt/(°C x capita) basis. That is, a similar level of indoor thermal comfort is expected once a certain level of affluence is attained. Integrating heating/cooling demand over expected HDH/CDH for a given city, yields a reasonable estimate of total annual energy consumption for indoor thermal comfort. This method can be used for historical, current-year or future projections by adjusting the per-capita heating/cooling demand (intensive margin) and heating/cooling-degree hours (extensive margin). Adjustments can be made to reflect change over time along the development spectrum (intensive margin) and the effects of climate change (extensive margin).
+Integrating heating/cooling demand over expected HDH/CDH for a given city yields a reasonable estimate of total annual energy consumption for indoor thermal comfort. This method can be used for historical, current-year or future projections by adjusting the per-capita heating/cooling demand (intensive margin), heating/cooling-degree hours (extensive margin) and population (extensive margin). Such adjustments can be used to reflect change over time along the development spectrum (intensive margin) and the effects of climate change (extensive margin).
 
-As a group, non-OECD cities (n=15) were found to have maxima per-capita cooling demands ranging from 0-12 W/(capita x °C) in all but three cities [^1]. By comparison, OECD cities (n=18) ranged from 10-140 W/(capita x °C). The median per-capita cooling demand was seven-times higher in OECD compared to non-OECD cities (40.8 versus 5.8 W/(°C x capita), respectively). The univariate distribution of per-capita cooling demands comparing OECD and non-OECD cities yields statistically distinct sets. <T Test OECD vs non-OECD>
+As a group, non-OECD cities (n=19) were found to have maxima per-capita cooling demands ranging from 0-13 W/(capita x °C) in all but two locales [^1]. By comparison, cooling demand in the OECD ranged from 15-151 W/(capita x °C). The interquartile range of cooling demands in non-OECD cities was 2-9 W/(°C x capita) compared to 35-90 W/(°C x capita) in the OECD. The median per-capita cooling demand was ten-times higher in OECD compared to non-OECD cities (50 versus 5 W/(°C x capita), respectively). 
 
-The only OECD cities in our study with per-capita cooling demands similar to that of the non-OECD set, were Los Angeles, Sand Diego and Honolulu (at 11, 23 and 19 W/°C x capita, respectively). All three of these locals have very mild, coastal climates with annual average temperatures at a near-perfect 22°C. While climate clearly attenuates or accentuates the intensity of demand for thermal comfort, it cannot explain all the difference.  While L.A., San Diego and Honolulu have near perfect climates, they still have per-capita cooling demands 2-4 times higher than emerging economy cities with much more extreme climates, such as Delhi. Based on climate alone, we would expect the opposite.
+The only OECD cities in our study with low per-capita cooling demands approaching those of the non-OECD set, were Los Angeles, San Diego and Honolulu (at 42, 21 and 22 W/°C x capita, respectively). All three of these locals have warm, coastal climates with annual average temperatures at a near-perfect 22°C. While climate clearly attenuates or amplifies demand for thermal comfort, it is clearly not the only determinent: L.A., San Diego and Honolulu have per-capita cooling demands 4.5-16 times higher than emerging economy cities with far more cooling degree hours, such as Abidjan, Accra or Dakar. Based on climate alone, we would expect the opposite.
 
-Within the OECD set, there is substantial variation. Mid-size, relatively sprawling, U.S. cities such as Detroit, MI; Chattanooga, TN; and Omaha, NE; appear to have the highest per-capita demand for cooling, at approximately 100 W/(capita x °C). Population dense Singapore, on the other hand, has a cooling demand of just 13 W/(°C x capita) despite having seven times as many standardized CDH as Detroit, five times as many as Omaha, and three times as many as Chattanooga. In fact, Singapore has the highest number of standardized CDH of any city in our study, with over 70,000 per annum. Result 6 provides a summary table of per-capita peak demand for electrical cooling (and heating) alongside standardized and optimized CDH (HDH) for all cities in our study. 
+Within the OECD set, there is substantial variation. Mid-size, relatively sprawling, U.S. cities such as Detroit, MI; Chattanooga, TN; and Omaha, NE; appear to have the highest per-capita demand for cooling, at approximately 100 W/(capita x °C). Population dense New York City, on the other hand, has a cooling demand of just 40 W/(°C x capita) despite having seven times as many standardized CDH as Detroit, five times as many as Omaha, and three times as many as Chattanooga. In fact, Singapore has the highest number of standardized CDH of any city in our study, with over 70,000 per annum. Table 5 provides a summary table of per-capita peak demand for electrical cooling (and heating) alongside standardized and optimized CDH (HDH) for all cities in our study. 
 
 Returning to the three non-OECD cities with substantially higher per-capita cooling demand than their peer-group, we have: Manila, Philippines at 19 W/(capita x °C); Amman, Jordan at 47 W/(capita x °C); and New Delhi (not NCT Delhi as a whole or any of the other districts; just the governmental district) at 40 W/(capita x °C). These three cities may be harbingers of what is to come among peer non-OECD cities analyzed in this study, as well as thousands of other emerging-market cities worldwide, as incomes rise and demand for indoor thermal comfort increases.
 
@@ -869,16 +950,26 @@ For example, New Delhi (NDMC; the seat of government), has a per-capita cooling 
 
 Amman, Jordan has per-capita cooling demand nine times as high as Beirut, although the cities are less than a 150 miles apart and have similar climates (although Beirut is more temperate given its location on the Mediterranean). Cooling demand in Amman is more similar to that of El Paso, TX, USA at 56 W/(capita x °C), than nearby Beirut. 
 
-Altogether, 15 of 37 cities were found to have statistically significant growth (90% CI) in cooling demand over the period of record, including all non-OECD cities except Beirut and Delhi. 11 of 15 of these cities experienced the highest cooling demand on record in the most recent year. This suggests continued, increasing penetration of air conditioning and increasing square-footage of air-conditioned space. The former is likely the driving force in seven non-OECD cities (Abidjan, Cote d'Ivoire; Accra, Ghana; Chandigarh, India; Dakar, Senegal; New Delhi, India; Delhi Military Contonement, India; and Manila, Philippines), whereas the latter is more likely in the four OECD cities (New York City, USA; Philadelphia, USA; Tacoma, USA; Indianapolis, USA.). That is to say, business and residences in non-OECD cities are rapidly adopting A/C, whereas non-OECD cities have already reached market saturation for A/C ownership, but continue to build and convert new square-feet into residential/commercial air-conditioned space. In both cases, demand for thermal comfort continues to rise, suggesting a long-tailed distribution. Even after emerging market cities reach asymptotic adoption rates for heating and cooling appliances, energy demand will continue to rise, following a development pattern of increasing residential/commercial air-conditioned real-estate.
+Altogether, 15 of 36 cities were found to have statistically significant growth (90% CI) in cooling demand over the period of record, including all non-OECD cities except Beirut and Delhi. 11 of 15 of these cities experienced the highest cooling demand on record in the most recent year. This suggests continued, increasing penetration of air conditioning and increasing square-footage of air-conditioned space. The former is likely the driving force in seven non-OECD cities (Abidjan, Cote d'Ivoire; Accra, Ghana; Chandigarh, India; Dakar, Senegal; New Delhi, India; Delhi Military Contonement, India; and Manila, Philippines), whereas the latter is more likely in the four OECD cities (New York City, USA; Philadelphia, USA; Tacoma, USA; Indianapolis, USA.). That is to say, business and residences in non-OECD cities are rapidly adopting A/C, whereas OECD cities have already reached market saturation for A/C ownership, but continue to build and convert new square-feet into residential/commercial air-conditioned space. In both cases, demand for thermal comfort continues to rise, suggesting a long-tailed distribution. Even after emerging market cities reach asymptotic adoption rates for heating and cooling appliances, energy demand will continue to rise, following a development pattern of increasing residential/commercial air-conditioned real-estate.
 
 From a system-operator perspective, total urban demand for electrical cooling ranges from less than 10 MW/°C in Abidjan, Accra, Antigua, Beirut, Chandigarh, Dakar, Kano and Tema, to over 2000 MW/°C in Tokyo, 300 MW/°C in NYC and Detroit, and ~200 MW/°C in Philadelphia and Manila. Of course, population and economy explain much of that difference, but large disparities remain even on a per-capita basis, as noted above and illustrated in Tables 3 and 4.
 
-[^1]: Manila, Philippines at 19 W/(capita x °C); Amman, Jordan at 47 W/(capita x °C); and New Delhi (not to be confused with Old Delhi nor NCT Delhi as a whole; only the relatively new governmental district) at 40 W/(capita x °C).
+[^1]: Amman, Jordan at 47 W/(capita x °C); and New Delhi (not to be confused with Old Delhi nor NCT Delhi as a whole; only the relatively new governmental district) at 40 W/(capita x °C).
+
+[^2]: The only non-OECD cities with a measurable cooling signal and more than one year of data but no observed increase in cooling demand over the reporting period were Delhi and its subdistricts, and Beirut, where the changes were minimal. In Delhi, it is widely know that overall demand for cooling **is increasing** (Cohen 2014 Dissertation), and thus the apparent decrease from 2011 to 2012 may simply be due to noise in the data or a less-hot summer. Annual trends can really only be established with at least three years of data.
 
 ### Heating
-A significant heating signal was detected (90% confidence level) for 22 of 37 cities analyzed: As temperatures decrease below an empirically-derived threshold temperature (unique to each city), electrical demand increases. That is, an inverse-linear relationship is observed between temperature and electricity demand below a the threshold temperature, typically 15-25°C, depending on the city. Cities with no significant heating signal fall into two categories: (1) tropical, coastal or otherwise mild climates with little need for heating, and (2) cities that do require heating for indoor thermal comfort during parts of the year, but have yet to reach significant penetration rates of heating appliance ownership. Category two are of particular interest because they will undoubtedly change significantly over the next several years and decades as incomes rise, the cost of heating appliances come down, and western living standards are sought. 
+A significant heating signal was detected (90% confidence level) for 21 of 36 cities analyzed: As temperatures decrease below an empirically-derived threshold temperature (unique to each city), electrical demand increases. That is, an inverse-linear relationship is observed between temperature and electricity demand below a the threshold temperature, typically 15-25°C, depending on the city. Cities with no significant heating signal fall into two categories: (1) tropical, coastal or otherwise mild climates with little need for heating, and (2) cities that do require heating for indoor thermal comfort during parts of the year, but have yet to reach significant penetration rates of heating appliance ownership. Category two are of particular interest because they will undoubtedly change significantly over the next several years and decades as incomes rise, the cost of heating appliances come down, and western living standards are sought. 
 
 Many non-OECD cities, which are of particular interest in this study, fall into one of the two aforementioned categories. Non-OECD cities that do indeed have significant heating signals include Amman at 28.3 W/(capita x °C), Beirut at 0.3, Chandigarh at 2.1, Delhi W-SW-S [districts](#anchor1) at 1, Delhi Military Contonement at 7, Delhi NW-N [districts](#anchor1) at 0.8, Mbabane at 3.6 and Nairobi at 0.4 W/(capita x °C). Interestingly, in Chandigarh and Nairobi, per-capita heating demand were not significantly different from zero as recently as 2011, but have since become significant and increased year-on-year in each of the past three years. We expect this trend to continue (increasing demand, but not strictly monotonic) for years to come as more households and businesses adopt electrical space heating.
+
+## Discussion
+#### Quantitative Comparison with Previous Studies
+Several previous studies have estimated urban energy requirements for heating and cooling. Most relevant, Chaturvedi et. al. (2014) simulate building energy demand for India out to 2095. They take a top-down approach, applying national-average data on residential-commercial asset ownership and building square-footage as inputs for a building energy service model sub-routine (Eom et. al. 2012) of the Global Change Assessment Model (GCAM; Edmonds et. al. 1997). Modeling is performed seperately for urban and rural buildings given divergent baseline conditions and trajectories. Broadly, Chaturvedi et. al. (2014) highlight the same themes as us: rapid urbanization and demand for building energy services are key drivers of global energy demand. However, our specific findings for urban India differ substantially, as detailed below.
+
+For benchmark comparison, we harmonize our city-specifc results for Delhi and Chanidargh (India) with all-India urban averages from Chaturvedi et. al. (2014). We estimate per-capita electricity consumption for cooling to be 370 kWh/(capita x year) for NCT Delhi (see Table 5)[^1]. Applying values reported in Chaturvedi et. al. (2014) and scaling by the number of households in Delhi (Chavez et al. 2012) and the average number of people per household (Delhi Statistical Abstract 2012), their estimate is equivalent to 36 kWh/(capita x year) -- an order of magnitude smaller than ours.
+
+Similarly, bootstrapping Chaturvedi et. al. (2014) estimates, the total cooling load for Delhi would be equivalent to 423 MW on an average cooling-day. By comparison, we find peak cooling load for Delhi to be 5359 MW, as per Table 6. While our estimate is for peak cooling demand, and Chaturvedi (2014) is for average cooling demand on a cooling day, the magnitude of difference cannot be explained by this alone. Assuming an average cooling day in Delhi is just 10 °C above a 21 °C threshold temperature, that would bring our estimate down to 1300 MW (see result 1) -- still three times higher than Chaturvedi. One interpretation is that A/C ownership in Delhi is three times higher than the national average for urban areas in India.
 
 <Continue Here>
 
@@ -906,8 +997,9 @@ population$pop <- as.numeric(population$pop)
 population$yr <- as.integer(population$yr)
 ```
 
-**Result 1:** Urban peak demand for electrical heating and cooling in MW/(∆T) 
+**Table 3:** Urban peak demand for electrical heating and cooling in MW/($\Delta$ T) 
 ```{r sparkTable, echo=FALSE}
+gradients.all.max.yr$heating <- abs(gradients.all.max.yr$heating)
 gradients <- gradients.all.max.yr
 gradients[,c(2:8)] <- round(gradients[,c(2:8)],2) 
 
@@ -919,9 +1011,9 @@ for (i in 1:nrow(gradients)){
     gradients$cooling[i] <- 0
   }
 }
-# 
-# gradients.count <- count(gradients$city)
-# get.cities <- as.character(gradients.count$x[gradients.count$freq>1])
+
+gradients.count <- count(gradients$city)
+get.cities <- as.character(gradients.count$x[gradients.count$freq>1])
 # 
 # # Creating the useful dataframe
 # gradients1 <- expand.grid(get.cities,2006:2014)
@@ -961,26 +1053,26 @@ for (i in 1:nrow(gradients)){
 # setwd("~/Google Drive/global_trends/GTUCH/latex_tables/demand_overall/")
 # # suppressMessages(export(x1,outputType="html",infonote=FALSE))
 # suppressMessages(export(x1,outputType="tex",infonote=TRUE))
-```
 
-```{r, results='asis',eval=FALSE}
 # gradients.one <- gradients[!gradients$city%in%get.cities,c(1,2,4,5)]
-# colnames(gradients.one) <- c("City","Year","Heating Demand [MW/DeltaT]","Cooling Demand [MW/DeltaT]")
-# kable(gradients.one)
+# colnames(gradients.one) <- c("City","Year","Heating Demand [MW/deltaT]","Cooling Demand [MW/deltaT]")
 ```
 
 ```{r, echo=FALSE}
 setwd("~/Google Drive/global_trends/GTUCH/")
 ```
-
 ![Urban peak demand for electrical heating and cooling](latex_tables/peak-absolute.png)
 
 *Footnote: [1] 0-values represent beta coefficients that we feel to reject as different from zero at the 90% confidence level. [2]: maximum = green dot; minimum = red dot; latest value = blue dot.*
 
+```{r, results='asis', eval=FALSE}
+# kable(gradients.one, digits=2)
+```
 
+\newpage
 
-**Result 2:** Per-capita peak demand for electrical heating and cooling in W/(∆T x capita) 
-```{r sparkTable.percap, echo=FALSE}
+**Table 4:** Per-capita peak demand for electrical heating and cooling in W/($\Delta$ T x capita) 
+```{r sparkTable-percap, echo=FALSE}
 gradients <- merge(gradients, population, by=c("city","yr"), all=TRUE)
 gradients <- gradients[,c(1,2,4,5,9)]
 gradients$cooling <- gradients$cooling/gradients$pop*10^6 #in W
@@ -988,8 +1080,8 @@ gradients$heating <- gradients$heating/gradients$pop*10^6 #in W
 gradients <- gradients[,c(1:4)]
 gradients <- na.omit(gradients)
 
-# gradients.count <- count(gradients$city)
-# get.cities <- as.character(gradients.count$x[gradients.count$freq>1])
+gradients.count <- count(gradients$city)
+get.cities <- as.character(gradients.count$x[gradients.count$freq>1])
 # 
 # # Creating the useful dataframe
 # gradients1 <- expand.grid(get.cities,2006:2014)
@@ -1020,82 +1112,106 @@ gradients <- na.omit(gradients)
 # x2 <- newSparkTable(gradients1.test, content, varType)
 # setwd("~/Google Drive/global_trends/GTUCH/latex_tables/demand_capita/")
 # suppressMessages(export(x2,outputType="tex",infonote=TRUE))
-```
 
-```{r, results='asis',eval=FALSE}
-# gradients.two <- gradients[!gradients$city%in%get.cities,c(1:4)]
-# colnames(gradients.two) <- c("City","Year","Heating Demand [W/DeltaT*Capita]","Cooling Demand [W/DeltaT*Capita]")
-# kable(gradients.two)
+# gradients.two <- gradients[!gradients$city%in%get.cities,]
+# colnames(gradients.two) <- c("City","Year","Heating Demand [W/DeltaT x Capita]","Cooling Demand [W/DeltaT x Capita]")
 ```
 
 ![Per-capita peak demand for electrical heating and cooling](latex_tables/peak-capita.png)
 
-** Result 3** Penetration of heating and cooling appliances 
+```{r, results='asis',eval=FALSE}
+# kable(gradients.two, digits=2)
+```
 
-```{r penetration.abidjan, echo=FALSE, fig.height=3}
+\newpage
+
+```{r penetration-abidjan, echo=FALSE, fig.height=2}
 abidjan.yr <- c(2011, 2012, 2013)
 df.abidjan <- hourly[hourly$city=="Abidjan" & hourly$yr%in%abidjan.yr,]
 df.abidjan <- ddply(df.abidjan, .(city, yr, m, d), function(x) x[x$mw == max(x$mw),])
 
 gradients.abidjan <- gradients.all.max.yr[gradients.all.max.yr$city=="Abidjan" & gradients.all.max.yr$yr%in%abidjan.yr,]
 
+# gradients.abidjan$sig.cooling <- sprintf("P_Value==%s", round(gradients.abidjan$sig.cooling,3))
+gradients.abidjan$coolingp <- sprintf("MW/deltaT==%s", round(gradients.abidjan$cooling,2))
+
+mean.t <- mean(df.abidjan$temperature)
+min.mw <- min(df.abidjan$mw)*1.1
+
 ggplot()+
   geom_point(data=df.abidjan, aes(x=temperature, y=mw))+
   geom_abline(data=gradients.abidjan, aes(slope=cooling,intercept=intercept, color='red'))+
+  geom_text(data=gradients.abidjan, aes(x=mean.t, y=min.mw, label=coolingp, size=10), parse=TRUE) +
   facet_wrap(city~yr, scales='fixed')+
   labs(x="Temperature [°C]", y="Daily Peak Load [MW]")+
-  theme_bw()
+  theme_classic() + theme(legend.position="none",axis.text=element_text(size=10), axis.title=element_text(size=10))
 ```
 
-```{r penetration.accra, echo=FALSE, fig.height=3, eval=FALSE}
+```{r penetration-accra, echo=FALSE, fig.height=2, eval=FALSE}
 df.accra <- hourly[hourly$city=="Accra",]
 df.accra <- ddply(df.accra, .(city, yr, m, d), function(x) x[x$mw == max(x$mw),])
 
 gradients.accra <- gradients.all.max.yr[gradients.all.max.yr$city=="Accra",]
+# gradients.accra$sig.cooling <- sprintf("Cooling==%s", round(gradients.accra$sig.cooling,3))
+gradients.accra$coolingp <- sprintf("MW/deltaT==%s",round(gradients.accra$cooling,2))
+
+mean.t <- mean(df.accra$temperature)
+min.mw <- min(df.accra$mw)*1.1
 
 ggplot()+
   geom_point(data=df.accra, aes(x=temperature, y=mw))+
   geom_abline(data=gradients.accra, aes(slope=cooling,intercept=intercept, color='red'))+
+  geom_text(data=gradients.accra, aes(x=mean.t, y=min.mw, label=coolingp, size=10), parse=TRUE) +
   facet_wrap(city~yr, scales='free')+
   labs(x="Temperature [°C]", y="Daily Peak Load [MW]")+
-  theme_bw()
+  theme_classic() + theme(legend.position="none",axis.text=element_text(size=10), axis.title=element_text(size=10))
 ```
 
-```{r penetration.dakar, echo=FALSE, fig.height=3}
+```{r penetration-dakar, echo=FALSE, fig.height=2}
 dakar.yr <- c(2012, 2013, 2014)
 df.dakar <- hourly[hourly$city=="Dakar" & hourly$yr%in%dakar.yr,]
 df.dakar <- ddply(df.dakar, .(city, yr, m, d), function(x) x[x$mw == max(x$mw),])
 
 gradients.dakar <- gradients.all.max.yr[gradients.all.max.yr$city=="Dakar" & gradients.all.max.yr$yr%in%dakar.yr,]
+# gradients.dakar$sig.cooling <- sprintf("P_Value==%s", round(gradients.dakar$sig.cooling,3))
+gradients.dakar$coolingp <- sprintf("MW/deltaT==%s", round(gradients.dakar$cooling,2))
+
+mean.t <- mean(df.dakar$temperature)
+min.mw <- 350 # min(df.dakar$mw)*1.1
 
 ggplot()+
   geom_point(data=df.dakar, aes(x=temperature, y=mw))+
   geom_abline(data=gradients.dakar, aes(slope=cooling,intercept=intercept, color='red'))+
+  geom_text(data=gradients.dakar, aes(x=mean.t, y=min.mw, label=coolingp,size=10), parse=TRUE) +
   facet_wrap(city~yr, scales='fixed')+
   labs(x="Temperature [°C]", y="Daily Peak Load [MW]")+
-  theme_bw()
+  theme_classic() + theme(legend.position="none",axis.text=element_text(size=10), axis.title=element_text(size=10))
 ```
 
-```{r penetration.manila, echo=FALSE, fig.height=3}
+```{r penetration-manila, echo=FALSE, fig.height=2}
 manila.yr <- c(2011, 2012, 2013)
 df.manila <- hourly[hourly$city=="Manila" & hourly$yr%in%manila.yr,]
 df.manila <- ddply(df.manila, .(city, yr, m, d), function(x) x[x$mw == max(x$mw),])
 
 gradients.manila <- gradients.all.max.yr[gradients.all.max.yr$city=="Manila" & gradients.all.max.yr$yr%in%manila.yr,]
+# gradients.manila$sig.cooling <- sprintf("P_Value==%s", round(gradients.manila$sig.cooling,3))
+gradients.manila$coolingp <- sprintf("MW/deltaT==%s", round(gradients.manila$cooling,2))
+
+mean.t <- mean(df.manila$temperature)
+min.mw <- min(df.manila$mw)*1.05
 
 ggplot()+
   geom_point(data=df.manila, aes(x=temperature, y=mw))+
   geom_abline(data=gradients.manila, aes(slope=cooling,intercept=intercept, color='red'))+
+  geom_text(data=gradients.manila, aes(x=mean.t, y=min.mw, label=coolingp,size=10), parse=TRUE) +
   facet_wrap(city~yr, scales='fixed')+
   labs(x="Temperature [°C]", y="Daily Peak Load [MW]")+
-  theme_bw()
+  theme_classic() + theme(legend.position="none",axis.text=element_text(size=10), axis.title=element_text(size=10))
 ```
 
+**Figure 5:** Increased penetration of cooling appliances 
 
-
-**Result 4:** Per-capita integral energy consumption for heating & cooling, and normalized energy consumption for heating and cooling. 
-
-**Note: The following cities/years were lost as a consequence of the 350-days filter: Abidjan-2010, Accra-2013, Beirut-2011, Beirut-2012, Beirut-2013, Beirut-2014, Chandigarh-2011, Chandigarh-2013, Kano-2014, Nairobi-2011, Nairobi-2012, New York City-2007, New York City-2008, New York City-2009, Sacramento-2006, San Diego-2012, San Diego-2013, Tacoma-2006, Tema-2014. ** 
+\newpage
 
 ```{r, fig.height=8, fig.width=8}
 energy <- test1
@@ -1142,7 +1258,11 @@ ggplot(gwh.melt, aes(x=city, y=value, fill=variable)) +
   # scale_fill_brewer("Energy Consumption", type="qual")
 ```
 
-```{r normalized.cooling.share, fig.height=8, fig.width=8}
+**Figure 6(a)** Per-capita integral energy consumption for heating & cooling. *Note: The following cities/years were lost as a consequence of the 350-days filter: Abidjan-2010, Accra-2013, Beirut-2011, Beirut-2012, Beirut-2013, Beirut-2014, Chandigarh-2011, Chandigarh-2013, Kano-2014, Nairobi-2011, Nairobi-2012, New York City-2007, New York City-2008, New York City-2009, Sacramento-2006, San Diego-2012, San Diego-2013, Tacoma-2006, Tema-2014.*
+
+\newpage
+
+```{r normalized-cooling-share, fig.height=8, fig.width=8}
 # **Result 5:** Normalized per-capita integral energy consumption for heating & cooling 
 normalized <- subset(energy.recent, select=c("city", "yr", "pop", "cooling.share", "heating.share", "other.share"))
 colnames(normalized) <- c("city", "yr", "pop", "cooling", "heating", "climate-independent")
@@ -1178,20 +1298,19 @@ ggplot(normalized.melt, aes(x=city, y=value, fill=variable)) +
   scale_y_continuous(expand=c(0,0)) +
   scale_fill_manual(values=c("blue", "red", "gray")) +
   theme(legend.position="bottom")
-
-
-# pushViewport(viewport(layout = grid.layout(1, 2)))
-# print(i1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(i2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 ```
 
-**Result 5: Total per-capita electricity consumption**
-```{r per.capita.energy.consumption, fig.height=8, fig.width=8}
+**Figure 6(b)** Normalized energy consumption for heating and cooling. 
 
+\newpage
+
+```{r per-capita-energy-consumption}
 consumption.per.cap <- subset(energy.recent, select=c("city","yr","consumption.percap.kwh"))
 consumption.per.cap.melt <- melt(consumption.per.cap, id.vars = c("city","yr"))
 consumption.per.cap.melt <- consumption.per.cap.melt[order(consumption.per.cap.melt$city, decreasing = FALSE),]
+```
 
+```{r, fig.height=8, fig.width=8, results='asis'}
 # plot
 ggplot(consumption.per.cap.melt, aes(x=city, y=value, fill=variable)) +
   geom_bar(stat="identity") +
@@ -1203,7 +1322,11 @@ ggplot(consumption.per.cap.melt, aes(x=city, y=value, fill=variable)) +
   theme(legend.position="bottom")
 ```
 
-**Result 6:** Summary Table of Per-Capita Peak Demand and Integral Energy Consumption for Thermal Comfort
+**Figure 7** Total per-capita electricity consumption
+
+\newpage
+
+**Table 5:** Summary Table of Per-Capita Peak Demand and Integral Energy Consumption for Thermal Comfort
 ```{r summary-table, echo=FALSE}
 # Mean Coefs
 gradients.t <- ddply(gradients, .(city), summarize, heating.d=round(mean(heating),2), cooling.d=round(mean(cooling),2))
@@ -1239,18 +1362,21 @@ summary.t <- merge(summary.t, city.dh,by="city",all=TRUE)
 summary.t <- merge(summary.t, city.dh.standard, by="city", all=TRUE)
 
 summary.t <- summary.t[,c("city","hdh","hdh.s","heating.d","heating.e","t.t","cdh","cdh.s","cooling.d","cooling.e")]
+summary.t$t.t <- round(summary.t$t.t,0)
 summary.t[is.na(summary.t)] <- "-"
 colnames(summary.t) <- c("City","Optimized HDH","Standard HDH","Heating Demand [W/(°C x Capita)]","Heating Energy [kWh/(capita x yr)]","Threshold Temperature","Optimized CDH","Standard CDH","Cooling Demand [W/(°C x capita)]","Cooling Energy [kWh/(capita x yr)]")
 ```
 
 ```{r, results='asis'}
-kable(summary.t, digits = 2)
+pander(summary.t, split.cells = 17, split.table = Inf)
+# kable(summary.t, digits = 2)
 ```
 
-*Footnote: Optimized HDH/CDH are calculated from the drived city-specific Threshold Temperature. Standard HDH/CDH are calculated assuming a 20°C baseline Threshold Temperature*
+*Footnote: Optimized HDH/CDH are calculated from the derived city-specific Threshold Temperature. Standard HDH/CDH are calculated assuming a 20°C baseline Threshold Temperature*
 
+\newpage
 
-**Result 7:** Urban Peak Load Analysis
+**Table 6:** Urban Peak Load Analysis
 ```{r cooling-share-of-demand, echo=FALSE}
 # Get years included in gradients.all.max.yr, then get most recent years 
 hourly.temp <- hourly
@@ -1291,14 +1417,22 @@ colnames(summary.t.1) <- c("City","Date","Hour","Temperature [°C]","Peak Demand
 ```
 
 ```{r, results='asis'}
-kable(summary.t.1, digits = 2)
+pander(summary.t.1, split.cells = 15, split.table = Inf)
+# kable(summary.t.1, digits = 2)
 ```
 
+
+## Acknowledgements
+We would like to acknowledge the following organizations for their cooperation: Thika Power, Autorite Nationale de Regulation du Secteur d'Electricite, Kenya Power & Light, Philippine Electricity Market Corporation, Ghana Grid Company, Senelec, Electricite du Liban, National Electric Power Company, Tokyo Electric Power Company and Swaziland Electricity Company, Strategy& (formerly Booz&Company). 
 
 ***
 
 Appendix
 --------------
+
+#### Supplementary material
+All data and analysis used in this study are available online at https://github.com/ecohen4/energy. We encourage readers to fork the repository and contribute to the open-source research community via pull requests. 
+
 #### [Delhi DISCOM to District Mapping](id:anchor1)
 
 | DISCOM | Districts    | 
@@ -1344,14 +1478,6 @@ References
 [31] Runming Yao, Baizhan Li, Koen Steemers, Energy policy and standard for built environment in China, Renewable Energy, Volume 30, Issue 13, October 2005, Pages 1973-1988, ISSN 0960-1481, http://dx.doi.org/10.1016/j.renene.2005.01.013.
 (http://www.sciencedirect.com/science/article/pii/S0960148105000376)
 [32] Xu P, Huang J, Shen P, Ma X, Gao X, Xu Q, Xiang Y. Commercial building energy use in six cities in Southern China. Energy Policy 2013, 53:76–89. doi:10.1016/j.enpol.2012.10.002.
-
-
-
-
-
-
-
-
 
 
 
