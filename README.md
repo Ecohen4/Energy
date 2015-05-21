@@ -1,14 +1,13 @@
-# Spatio-Temporal Downscaling of Energy Demand Forecasts
+# Global Trends in Urban Cooling and Heating
 
-	Use of data from this repository must be cited as:
-	
-	Cohen, Elliot, Vijay Modi, Henri Torbey, Michael Piccirelli and Yu-Tian (2015).  
-	Global Trends in Urban Energy Use. Working Paper of the Sustainable Engineering Lab,   
-	Columbia University, February 2015. Available online:  
-	http://ecohen4.github.io/Energy/Global_Trends_v4.html
-	
-Global energy forecasts such as the annual IEA World Energy Outlook inform energy planning at the highest levels of government and industry. These reports directly influence investment decisions today that will lock-in carbon emissions and environmental impacts for decades to come. However, such mid- to long-range demand forecasts are typically reported as annual totals and provide little insight to the temporal distribution throughout the year. This leaves a huge gap in investment decisions, particularly in the power sector where demand is non-uniform, growth is non-linear, and cost is driven by capital expenditures, which in turn are driven by peak demand, not integral energy consumption. 
+```
+Any use of data or analysis from this repository must be properly cited as per academic standards. You may use the following citation:
 
-Peak electrical demand for a power control area may represent just a few days of the year, meaning that capital utilization is low and return on investment is long. Thus accurate long-range peak demand forecasts are essential for proper investment decisions today. This is particularly true for renewable energy, where utilization rates are already low due to non-dispatchability (wind) and limited availability throughout the day (solar).
+Cohen, Elliot, Henri Torbey, Michael Piccirilli, Yu Tian and Vijay Modi (2015). Global Trends in Urban Cooling and Heating. Working Paper of the Sustainable Engineering Lab, Columbia University, Updated May 21 2015. Available online: http://ecohen4.github.io/Energy/Global_Trends_v4.html
+```
 
-To address this shortcoming, the Sustainable Engineering Lab at Columbia University is leading a study of diurnal and seasonal patterns of energy demand for a large number of global cities. This requires more and better data than is typically available to researchers, and thus we have embarked on an ambitious, multi-year project to cultivate a diverse network of electricity grid operator partners throughout the developing world. Data continues to pour in, strengthening our analyses. This will be a key area of research in 2015 and beyond.
+## Abstract	
+As the tropics and subtropics become increasingly urban, industrial and affluent, it is important to consider how energy demand – particularly for indoor thermal comfort – will evolve differently in these places than it has historically across the global North. Already, heating, ventilation and air conditioning (HVAC) account for 35% of total primary energy requirements of the United States (Kwok and Rajkovich 2010), and are expected to reach similar proportions in China within 5 years (Wan et. al. 2011). On a per capita basis, developed cities in the OECD (represented in our study by cities in the U.S. and Japan) require 35-90 W/°C (interquartile range) above a comfortable room temperature, while tropical/subtropical cities outside the OECD (mostly in South Asia, Africa and the Middle East) require 2-9 W/°C. The latter is expected to catch up to the former as household incomes rise and adoption of AC accelerates; and someday surpass the former, given higher indoor-outdoor summer temperature differentials.
+
+
+*Link to the Full Article* <http://ecohen4.github.io/Energy/Global_Trends_v4.html>
