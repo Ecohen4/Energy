@@ -1,0 +1,135 @@
+---
+title: "Forecast_demand"
+author: "Yue Guo"
+date: "May 26, 2015"
+output: html_document
+---
+```{r,include=FALSE}
+setwd("/Users/YueGuo/Documents/Energy_Lab/data/")
+load("DemandData_use.RData")
+library(forecast)
+```
+1. Forecast for Manila
+```{r}
+demandData = data_list_demand[[6]]
+demandData = na.omit(demandData)
+dailyMax_all=aggregate(demandData[, c("MW")], by=list(demandData$Date), FUN=max)
+dailyMax_all$YR = substr(as.factor(dailyMax_all[,1]),1,4)
+dailyMax_raw = rbind(subset(dailyMax_all,dailyMax_all$YR==2011),subset(dailyMax_all,dailyMax_all$YR==2012))
+dailyMax <- data.frame(Date = dailyMax_raw[,1],MW = dailyMax_raw[,2])
+dailyDataTs=ts(dailyMax$MW, start=c(2011), end=c(2013), frequency=365)
+```
+First, Decomposition
+```{r}
+Decomp <- stl(dailyDataTs, s.window="period")
+```
+Decomposition results:
+```{r}
+plot(Decomp)
+```
+
+Three methods to forecast:  
+(1) stl: use the results of decomposition;  
+(2) HW: Holt-Winters
+And the better one in (1)and(2) with a GDP correction
+
+(1) ARIMA
+```{r}
+forecast_stl <- forecast(Decomp, h=365, method="arima")
+plot(forecast_stl)
+```
+
+(2) Holt-Winters
+```{r}
+fit_HW <-HoltWinters(dailyDataTs)
+forecast_HW <- forecast(fit_HW, 365, method="arima")
+plot(forecast_HW)
+```
+
+Then compare them with the true data:
+```{r}
+# true data
+true_data <- subset(dailyMax_all,dailyMax_all$YR==2013)
+plot(forecast_stl$mean,col="blue",xlim=c(2013,2014),ylim=c(4000,9000),ylab="MW",xlab="Date")
+par(new=T)
+plot(forecast_HW$mean,col="red",xlim=c(2013,2014),ylim=c(4000,9000),ylab="",xlab="",xaxt="n")
+par(new=T)
+plot(true_data[,2],type="l",col="black",xlim=c(0,365),ylim=c(4000,9000),ylab="",xlab="",xaxt="n")
+legend("bottomright",title = "Lines:",legend = c("stl","HW","true"), col=c("blue","red","black"),pch=20,cex=.8)
+```
+
+Calculate the mean percent error of methods above:
+```{r}
+MPE_Cal <- function(data_true,data_est){
+  return(1/length(data_true)*sum(abs(data_true-data_est)/data_true))
+}
+```
+MPE for ARIMA:
+```{r}
+MPE_Cal(true_data[,2],forecast_stl$mean)
+```
+MPE for Holt-Winters:
+```{r}
+MPE_Cal(true_data[,2],forecast_HW$mean)
+```
+The stl method is better.
+
+2. Forecast for Dakar
+```{r}
+demandData = data_list_demand[[5]]
+demandData = na.omit(demandData)
+dailyMax_all=aggregate(demandData[, c("MW")], by=list(demandData$Date), FUN=max)
+dailyMax_all$YR = substr(as.factor(dailyMax_all[,1]),1,4)
+dailyMax_raw = rbind(subset(dailyMax_all,dailyMax_all$YR==2011),subset(dailyMax_all,dailyMax_all$YR==2012))
+dailyMax <- data.frame(Date = dailyMax_raw[,1],MW = dailyMax_raw[,2])
+dailyDataTs=ts(dailyMax$MW, start=c(2011), end=c(2013), frequency=365)
+```
+First, Decomposition
+```{r}
+Decomp <- stl(dailyDataTs, s.window="period")
+```
+Decomposition results:
+```{r}
+plot(Decomp)
+```
+
+(1) ARIMA
+```{r}
+forecast_stl <- forecast(Decomp, h=365, method="arima")
+plot(forecast_stl)
+```
+
+(2) Holt-Winters
+```{r}
+fit_HW <-HoltWinters(dailyDataTs)
+forecast_HW <- forecast(fit_HW, 365, method="arima")
+plot(forecast_HW)
+```
+
+Then compare them with the true data:
+```{r}
+# true data
+true_data <- subset(dailyMax_all,dailyMax_all$YR==2013)
+plot(forecast_stl$mean,col="blue",xlim=c(2013,2014),ylim=c(320,480),ylab="MW",xlab="Date")
+par(new=T)
+plot(forecast_HW$mean,col="red",xlim=c(2013,2014),ylim=c(320,480),ylab="",xlab="",xaxt="n")
+par(new=T)
+plot(true_data[,2],type="l",col="black",xlim=c(0,365),ylim=c(320,480),ylab="",xlab="",xaxt="n")
+legend("bottomright",title = "Lines:",legend = c("stl","HW","true"), col=c("blue","red","black"),pch=20,cex=.6)
+```
+
+Calculate the mean percent error of methods above:
+```{r}
+MPE_Cal <- function(data_true,data_est){
+  return(1/length(data_true)*sum(abs(data_true-data_est)/data_true))
+}
+```
+MPE for ARIMA:
+```{r}
+MPE_Cal(true_data[,2],forecast_stl$mean)
+```
+MPE for Holt-Winters:
+```{r}
+MPE_Cal(true_data[,2],forecast_HW$mean)
+```
+The HW method is better.
